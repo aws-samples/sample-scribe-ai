@@ -1,0 +1,16 @@
+**/__pycache__
+**/.venv
+**/.git
+**/.env
+**/.envrc
+**/Dockerfile.base
+**/Dockerfile
+**/Dockerfile.ci
+**/Makefile
+**/docker-compose.yml
+**/*.sh
+iac
+/*.jpg
+/*.png
+/*.md
+/*.yml

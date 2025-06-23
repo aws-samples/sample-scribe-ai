@@ -1,0 +1,22 @@
+<div class="row">
+  <div class="d-flex w-100 justify-content-between">
+    <h5>Conversations</h5>
+    <div class="col-1">{% include "new.html" %}</div>
+  </div>
+</div>
+<div class="list-group">
+  {% for conversation in chat_history %}
+  <a
+    class="list-group-item list-group-item-action cursor-pointer"
+    style="cursor: pointer;"
+    aria-current="true"
+    hx-get="/conversation/{{conversation.conversationId}}"
+    hx-target="#chat-content"
+  >
+    <p class="mb-1">{{conversation.initial_question}}</p>
+    <div class="d-flex w-100 justify-content-between">
+      <small>{{conversation.created}}</small>
+    </div>
+  </a>
+  {% endfor %}
+</div>

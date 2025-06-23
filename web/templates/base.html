@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>{% block title %}Scribe AI{% endblock %}</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicon/site.webmanifest">
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/static/css/custom.css" rel="stylesheet" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://unpkg.com/htmx.org@1.9.10"
+      integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+      crossorigin="anonymous"
+    ></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg">
+      <div class="container">
+        <a class="navbar-brand" href="/">
+          <i class="fas fa-brain"></i>
+          Scribe AI
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            {% if current_user %} {# Only show these links if user is
+            authenticated #}
+            <li class="nav-item">
+              <a
+                class="nav-link {% if active_page == 'interviews' %}active{% endif %}"
+                href="/interviews"
+                >Interviews</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if active_page == 'reviews' %}active{% endif %}"
+                href="/reviews"
+                >Reviews</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link {% if active_page == 'chat' %}active{% endif %}"
+                href="/chat"
+                >Chat</a
+              >
+            </li>
+            <li class="nav-item">
+              {% if is_admin %}
+              <a
+                class="nav-link {% if active_page == 'admin' %}active{% endif %}"
+                href="/admin"
+                >Admin</a
+              >
+              {% endif %}
+            </li>
+            {% endif %}
+          </ul>
+          <ul class="navbar-nav ms-auto">
+            {% if current_user %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="userDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="fas fa-user-circle me-1"></i>
+                {% if current_user.username %}
+                {{ current_user.username }}
+                {% endif %}
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="userDropdown"
+              >
+                {% if is_admin %}
+                <li>
+                  <span class="dropdown-item-text text-muted"
+                    ><small>Administrator</small></span
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                {% endif %}
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('logout') }}"
+                    >Sign Out</a
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('login') }}">Sign In</a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <section>
+      <div class="container py-4">
+        {% block pre_content %}{% endblock %}
+        <div id="body" class="row">{% block content %}{% endblock %}</div>
+        {% block post_content %}{% endblock %}
+      </div>
+    </section>
+
+    <script src="/static/js/chrome-speech.js"></script>
+    <script src="/static/js/speech-recognition.js">"></script>
+    <script>
+      // Check if the answer field is loaded, if so, initialize speech to text
+      function initSpeechToText() {
+        const speechBtn = document.getElementById('speech-to-text-btn');
+        if (!speechBtn) return;
+
+        const textArea = document.getElementById('speech-text-area');
+        if (!textArea)  return;
+
+        // Init the speech module
+        var speech = new Speech();
+
+        speech.recognition.onresult = function(event) {
+          const speechRecognitionResult = event.results[event.results.length - 1];
+          const isFinal = speechRecognitionResult.isFinal;
+          if( isFinal ) {
+            const speechRecognitionAlternative = speechRecognitionResult[speechRecognitionResult.length - 1];
+            const currentTranscript = speechRecognitionAlternative.transcript;
+            console.log(currentTranscript);
+
+            // Get current cursor position
+            const cursorPos = textArea.selectionStart;
+            const textBefore = textArea.value.substring(0, cursorPos);
+            const textAfter = textArea.value.substring(cursorPos);
+
+            // Update text area with transcribed text at cursor position
+            if (currentTranscript) {
+                textArea.value = textBefore + currentTranscript + textAfter;
+
+                // Update cursor position
+                const newPos = cursorPos + currentTranscript.length;
+                textArea.selectionStart = newPos;
+                textArea.selectionEnd = newPos;
+                textArea.focus();
+            }
+          }
+        }
+
+        speech.recognition.onerror = (event) => {
+            console.error('Speech recognition error', event.error);
+            // If there's an error, reset the UI
+            speechBtn.classList.remove('btn-outline-primary');
+            speechBtn.classList.add('btn-primary');
+            isListening = false;
+        };
+
+        speechBtn.addEventListener('click', function() {
+          isMicOn = speechBtn.classList.contains('btn-outline-primary');
+          if (isMicOn) {
+            speech.stopCapture();
+            speechBtn.classList.remove('btn-outline-primary');
+            speechBtn.classList.add('btn-primary');
+          } else {
+            speech.startCapture();
+            speechBtn.classList.remove('btn-primary');
+            speechBtn.classList.add('btn-outline-primary');
+          }
+        });
+
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        // Convert all UTC times to local time
+        document.querySelectorAll('.utc-time').forEach(function(element) {
+          const utcDateStr = element.getAttribute('data-utc');
+          if (utcDateStr) {
+            const utcDate = new Date(utcDateStr);
+
+            // Format the date in the same style as the original
+            const options = {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            };
+
+            // Check if the date string contains a year
+            if (element.textContent.includes(', 20')) {
+              options.year = 'numeric';
+            }
+
+            let formattedDate = utcDate.toLocaleString('en-US', options);
+
+            // Replace leading zeros in hours (e.g., "01:30 PM" to "1:30 PM")
+            formattedDate = formattedDate.replace(/(\s|^)0(\d:\d\d)/, '$1$2');
+
+            element.textContent = formattedDate;
+          }
+        });
+      });
+
+      // Also run the conversion when htmx content is loaded
+      document.body.addEventListener('htmx:afterSwap', function() {
+        // Initialize the speech to text for Interviews
+        initSpeechToText();
+
+        document.querySelectorAll('.utc-time').forEach(function(element) {
+          const utcDateStr = element.getAttribute('data-utc');
+          if (utcDateStr) {
+            const utcDate = new Date(utcDateStr);
+
+            const options = {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            };
+
+            if (element.textContent.includes(', 20')) {
+              options.year = 'numeric';
+            }
+
+            let formattedDate = utcDate.toLocaleString('en-US', options);
+            formattedDate = formattedDate.replace(/(\s|^)0(\d:\d\d)/, '$1$2');
+
+            element.textContent = formattedDate;
+          }
+        });
+      });
+    </script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% set active_page = 'interviews' %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Interview Details</span></h4>
+        <a href="/reviews" class="btn btn-outline-primary">Back to Reviews</a>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="d-flex justify-content-between">
+            <div>
+              <p class="mb-1"><strong>Topic:</strong> {{ interview.topic_name }}</p>
+              <p class="mb-1"><strong>Respondent:</strong> {{ interview.user_name }}</p>
+              <p class="mb-0"><strong>Date:</strong> <span class="utc-time" data-utc="{{ interview.completed.isoformat() }}">{{ interview.completed.strftime('%m/%d/%y') }} at {{ interview.completed.strftime('%I:%M %p').lower() }}</span></p>
+            </div>
+            <div>
+              <strong>Status:</strong> 
+              {% if interview.status.value == 'rejected' %}
+                <span class="badge bg-danger">{{ interview.status.value }}</span>
+              {% elif interview.status.value == 'approved' %}
+                <span class="badge bg-success">{{ interview.status.value }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ interview.status.value }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Conversation Section (Collapsible) -->
+          <div class="accordion mb-4" id="conversationAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="conversationHeading">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#conversationCollapse" aria-expanded="true"
+                        aria-controls="conversationCollapse">
+                  <h5 class="mb-0">Conversation</h5>
+                </button>
+              </h2>
+              <div id="conversationCollapse" class="accordion-collapse collapse show"
+                   aria-labelledby="conversationHeading" data-bs-parent="#conversationAccordion">
+                <div class="accordion-body">
+                  {% if interview.questions|length > 0 %}
+                  <!-- list of all questions and answers -->
+                  <ul id="chat" class="list-unstyled">
+                    {% for question in interview.questions %}
+                    <li class="d-flex mb-4">
+                      <p></p>
+                      <div class="card">
+                        <div class="card-header d-flex p-3">
+                          <p class="fw-bold mb-0">AI</p>
+                        </div>
+                        <div class="card-body">
+                          <p class="mb-0">{{question.question|markdown}}</p>
+                        </div>
+                      </div>
+                    </li>
+                    {% if question.answer %}
+                    <li class="d-flex mb-4">
+                      <div class="card w-100 border-primary">
+                        <div class="card-header d-flex p-3">
+                          <p class="fw-bold mb-0">User</p>
+                        </div>
+                        <div class="card-body">
+                          <p class="mb-0">{{question.answer|markdown}}</p>
+                        </div>
+                      </div>
+                      <p></p>
+                    </li>
+                    {% endif %} {% endfor %}
+                  </ul>
+                  {% else %}
+                  <p class="text-muted">No conversation found for this interview.</p>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Section (Collapsible) -->
+          {% if interview.summary %}
+          <div class="accordion" id="summaryAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="summaryHeading">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#summaryCollapse" aria-expanded="false"
+                        aria-controls="summaryCollapse">
+                  <h5 class="mb-0">Summary</h5>
+                </button>
+              </h2>
+              <div id="summaryCollapse" class="accordion-collapse collapse"
+                   aria-labelledby="summaryHeading" data-bs-parent="#summaryAccordion">
+                <div class="accordion-body">
+                  <div class="p-3 bg-light rounded">
+                    {{ interview.summary|markdown }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <a href="/reviews" class="btn btn-primary">Back to Reviews</a>
+        <a href="/docs/{{interview.id}}" class="btn btn-secondary">View Document</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

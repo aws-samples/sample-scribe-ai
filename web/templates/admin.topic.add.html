@@ -1,0 +1,70 @@
+<div id="admin" class="col-12">
+  <h5 class="mb-4">Add New Topic for Scope: {{scope.name}}</h5>
+
+  <form hx-put="/admin/topics/save" hx-target="#admin">
+    <input type="hidden" name="scope_id" value="{{scope.id}}">
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="name"
+        name="name"
+        placeholder="Enter topic name"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="description" class="form-label">Description</label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="3"
+        placeholder="Enter topic description"
+      ></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label for="areas" class="form-label">Areas (one per line)</label>
+      <textarea
+        class="form-control"
+        id="areas"
+        name="areas"
+        rows="10"
+        placeholder="Enter areas, one per line"
+      ></textarea>
+      <div class="form-text">Each line will be treated as a separate area.</div>
+    </div>
+
+    <div class="mb-3">
+      <label for="user_id" class="form-label">Assign to User</label>
+      <select 
+        class="form-select" 
+        id="user_id" 
+        name="user_id"
+        aria-label="Select user">
+        <option value="">Assign to a user...</option>
+        {% for user in users %}
+          <option value="{{ user['id'] }}">
+            {{ user['username'] }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        hx-get="/admin/topics/{{scope.id}}"
+        hx-target="#admin"
+      >
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

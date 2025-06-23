@@ -1,0 +1,7 @@
+psycopg[binary]
+boto3
+opentelemetry-instrumentation-psycopg
+requests
+reportlab
+beautifulsoup4
+html2text

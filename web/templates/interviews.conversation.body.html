@@ -1,0 +1,42 @@
+<div class="container-fluid p-0">
+  <!-- Simple CSS for floating topic areas card -->
+  <style>
+    .sticky-card {
+      position: sticky;
+      top: 20px;
+    }
+  </style>
+
+  <!-- Topic Header -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <h4 class="border-bottom pb-2">Interview Topic: {{interview.topic_name}}</h4>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="row">
+    <!-- Left Sidebar - Interview Areas -->
+    <div class="col-md-3 col-sm-12 mb-3">
+      <div class="card sticky-card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Topic Areas</h6>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% for area in interview.topic_areas %}
+            <li class="list-group-item">{{area}}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Chat Content -->
+    <div class="col-md-9 col-sm-12">
+      <div id="chat-content">
+        {% include "interviews.conversation.chat.html" with context %}
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,43 @@
+services:
+
+  app:
+    container_name: scribe-ai-events
+    image: scribe-ai-events
+    build:
+      context: ../
+      dockerfile: ./events/Dockerfile
+    platform: linux/arm64
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=scribe-ai-events.local,service.name=events
+    env_file: .env
+    # network_mode: "host"
+    ports:
+      - "8090:8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /app/tmp
+    depends_on:
+      - otel
+
+  otel:
+    image: public.ecr.aws/aws-observability/aws-otel-collector:latest
+    command: ["--config=/etc/ecs/ecs-default-config.yaml"]
+    env_file: .env
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+
+volumes:
+  db:
+    driver: local

@@ -1,0 +1,144 @@
+{% extends "base.html" %} {% block extra_head %} {% if not current_user %}
+<link href="/static/css/landing-page.css" rel="stylesheet" />
+<style>
+  /* Override container for landing page */
+  .container.py-4 {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #body.row {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    overflow-x: hidden;
+    background-color: var(--light-bg);
+  }
+</style>
+{% else %}
+<link href="/static/css/dashboard.css" rel="stylesheet" />
+{% endif %} {% endblock %} {% block content %} {% if current_user %}
+<div class="container">
+  <div class="dashboard-welcome">
+    <h1>Welcome to Scribe AI, {{ current_user.username }}!</h1>
+    <p>
+      Access your knowledge management tools and start preserving expertise
+      today.
+    </p>
+  </div>
+
+  <div class="dashboard-grid">
+    <a href="/interviews" class="dashboard-card">
+      <div class="dashboard-card-header">
+        <i class="fas fa-microphone-alt dashboard-card-icon"></i>
+      </div>
+      <div class="dashboard-card-body">
+        <h3>Interviews</h3>
+        <p>
+          Capture knowledge through structured interviews with subject matter
+          experts. Record, transcribe, and organize expertise in one place.
+        </p>
+      </div>
+      <div class="dashboard-card-footer">
+        <span class="dashboard-btn">Start Interviewing</span>
+      </div>
+    </a>
+
+    <a href="/reviews" class="dashboard-card">
+      <div class="dashboard-card-header">
+        <i class="fas fa-clipboard-check dashboard-card-icon"></i>
+      </div>
+      <div class="dashboard-card-body">
+        <h3>Reviews</h3>
+        <p>
+          Review and validate captured knowledge. Ensure accuracy and
+          completeness of information before it becomes part of your knowledge
+          base.
+        </p>
+      </div>
+      <div class="dashboard-card-footer">
+        <span class="dashboard-btn">View Reviews</span>
+      </div>
+    </a>
+
+    <a href="/chat" class="dashboard-card">
+      <div class="dashboard-card-header">
+        <i class="fas fa-comments dashboard-card-icon"></i>
+      </div>
+      <div class="dashboard-card-body">
+        <h3>Ask Questions</h3>
+        <p>
+          Search your knowledge base using natural language. Get instant answers
+          to your questions based on your organization's expertise.
+        </p>
+      </div>
+      <div class="dashboard-card-footer">
+        <span class="dashboard-btn">Start Chatting</span>
+      </div>
+    </a>
+  </div>
+</div>
+{% else %}
+<!-- Main Content -->
+<main class="main-content">
+  <!-- Welcome Section -->
+  <section class="welcome-section">
+    <div class="welcome-container">
+      <h1>Welcome to Scribe AI</h1>
+      <p>Preserving Expertise, Powering Innovation</p>
+      <div class="cta-buttons">
+        <a href="{{ url_for('login') }}" class="primary-btn">Sign In</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features">
+    <div class="welcome-container">
+      <div class="features-grid">
+        <div class="feature-card">
+          <i class="fas fa-microphone feature-icon"></i>
+          <h3>Effortless Capture</h3>
+          <p>
+            Natural conversations, powerful results. Capture expertise through
+            simple dialogue.
+          </p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-brain feature-icon"></i>
+          <h3>AI-Powered Processing</h3>
+          <p>Transform conversations into structured, searchable knowledge.</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-bolt feature-icon"></i>
+          <h3>Instant Access</h3>
+          <p>Find the right information when you need it most.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+{% endif %}
+{% endblock %}
+{% block pre_content %}
+{% if not current_user %}
+<style>
+  /* Override container for landing page */
+  .container.py-4 {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #body.row {
+    margin: 0 !important;
+    width: 100% !important;
+  }
+</style>
+{% endif %}
+{% endblock %}

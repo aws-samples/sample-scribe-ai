@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-8 offset-md-2 text-center mt-5">
+      <div class="alert alert-danger">
+        <h4 class="alert-heading">Error</h4>
+        <p>{{ message }}</p>
+        <hr>
+        <p class="mb-0">
+          <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Go Back
+          </a>
+          <a href="/" class="btn btn-primary">
+            <i class="fas fa-home"></i> Go to Home
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+<div id="reviews" class="col-12">
+  <h5 class="mb-4">Review: {{interview.topic_name}} Interview</h5>
+  <p class="text-muted">
+    Submitted by {{ interview.user_name }} on
+    <span class="utc-time" data-utc="{{ interview.completed.isoformat() }}"
+      >{{ interview.completed.strftime('%b %d at %I:%M %p').replace(' 0', '
+      ').replace('%p', interview.completed.strftime('%p').lower()) }}</span
+    >
+  </p>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h6 class="card-subtitle mb-3">Interview Summary</h6>
+      <div class="markdown-content">{{ interview.summary | markdown }}</div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end align-items-center mt-3">
+    <a
+      href="/interviews"
+      class="btn btn-danger me-2"
+      hx-post="/review/reject/{{ interview.id }}"
+      hx-indicator="#action-indicator"
+      >Reject</a
+    >
+    <a
+      href="/interviews"
+      class="btn btn-success"
+      hx-post="/review/approve/{{ interview.id }}"
+      hx-indicator="#action-indicator"
+      >Approve</a
+    >
+  </div>
+  <div class="d-flex justify-content-end mt-2">
+    <span id="action-indicator" class="htmx-indicator">
+      <div class="d-flex align-items-center">
+        <small class="me-1">Processing interview</small>
+        <div
+          class="spinner-border spinner-border-sm text-primary"
+          role="status"
+        ></div>
+      </div>
+    </span>
+  </div>
+</div>

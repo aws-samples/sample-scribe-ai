@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% set active_page = 'reviews' %}
+
+{% block content %}
+
+<div id="reviews" class="col-12">
+  <h5 class="mb-4">Interviews to review</h5>
+
+  <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    {% if pending|length == 0 %}
+    <p class="text-muted">No reviews available</p>
+    {% endif %}
+    {% for interview in pending %}
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">{{interview.scope_name}}</h5>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div>
+            <p><strong>{{ interview.topic_name }}</strong></p>
+            <p>Submitted by {{ interview.user_name }} on <span class="utc-time" data-utc="{{ interview.completed.isoformat() }}">{{ interview.completed.strftime('%b %d at %I:%M %p').replace(' 0', ' ').replace('%p', interview.completed.strftime('%p').lower()) }}</span></p>
+          </div>
+          <div class="text-end mt-auto">
+            <a
+              href="#"
+              class="btn btn-primary btn-sm{% if interview.status.value == 'processing' %} disabled{% endif %}"
+              hx-get="/review/start/{{interview.id}}"
+              hx-target="#reviews">{% if interview.status.value == 'pendingreview' %}Start{% elif interview.status.value == 'reviewing' %}Resume{% elif interview.status.value == 'processing' %}Processing{% endif %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <h5 class="mb-4">Reviewed interviews</h5>
+    {% if completed|length == 0 %}
+    <div class="col-12">
+      <p class="text-muted">No completed reviews</p>
+    </div>
+    {% else %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Topic</th>
+            <th>User</th>
+            <th>Completion Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for interview in completed %}
+          <tr>
+            <td>{{ interview.topic_name }}</td>
+            <td>{{ interview.user_name }}</td>
+            <td><span class="utc-time" data-utc="{{ interview.completed.isoformat() }}">{{ interview.completed.strftime('%b %d, %Y at %I:%M %p').replace(' 0', ' ').replace('%p', interview.completed.strftime('%p').lower()) }}</span></td>
+            <td>
+              {% if interview.status.value == 'approved' %}
+              <span class="badge bg-success">Approved</span>
+              {% elif interview.status.value == 'rejected' %}
+              <span class="badge bg-danger">Rejected</span>
+              {% elif interview.status.value == 'pendingapproval' %}
+              <span class="badge bg-warning">Processing</span>
+              {% else %}
+              <span class="badge bg-secondary">{{ interview.status.value }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <a
+                href="/interviews/view/{{interview.id}}"
+                class="btn btn-xs btn-primary me-1"
+                title="View Interview">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a
+                href="/docs/{{interview.id}}"
+                class="btn btn-xs btn-secondary"
+                title="View Document">
+                <i class="fas fa-file-alt"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

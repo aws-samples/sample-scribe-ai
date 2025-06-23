@@ -1,0 +1,63 @@
+<div id="interview" class="col-12">
+  <h5 class="mb-4">Assigned Interviews</h5>
+
+  <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    {% if interviews|length == 0 %}
+    <div class="col-12 text-center">
+      <p class="text-muted">No interviews have been assigned to you yet.</p>
+    </div>
+    {% endif %} {% for interview in interviews %}
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">{{interview.scope_name}}</h5>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div>
+            <p><strong>{{ interview.topic_name }}</strong></p>
+            <p>{{ interview.topic_description }}</p>
+          </div>
+          <div class="text-end mt-auto">
+            {% if interview.status.value == 'notstarted' %}
+            <div class="d-flex align-items-center justify-content-end">
+              <span id="loading-indicator-{{interview.id}}" class="htmx-indicator me-2">
+                <div class="d-flex align-items-center">
+                  <small class="me-1">Preparing interview</small>
+                  <div class="spinner-border spinner-border-sm spinner-color" role="status"></div>
+                </div>
+              </span>
+              <a
+                href="#"
+                class="btn btn-primary btn-sm"
+                hx-get="/interviews/start/{{interview.id}}"
+                hx-target="#interview"
+                hx-indicator="#loading-indicator-{{interview.id}}"
+                >Start</a
+              >
+            </div>
+            {% endif %}
+            {% if interview.status.value == 'started' %}
+            <div class="d-flex align-items-center justify-content-end">
+              <span id="loading-indicator-{{interview.id}}" class="htmx-indicator me-2">
+                <div class="d-flex align-items-center">
+                  <small class="me-1">Loading interview</small>
+                  <div class="spinner-border spinner-border-sm spinner-color" role="status"></div>
+                </div>
+              </span>
+              <a
+                href="#"
+                class="btn btn-primary btn-sm"
+                hx-get="/interviews/resume/{{interview.id}}"
+                hx-target="#interview"
+                hx-indicator="#loading-indicator-{{interview.id}}"
+                >Resume</a
+              >
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,8 @@
+FROM public.ecr.aws/docker/library/python:3.12-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# python deps
+COPY ./piplock.txt .
+RUN pip3 install -r piplock.txt

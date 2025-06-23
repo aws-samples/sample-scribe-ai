@@ -1,0 +1,60 @@
+<div class="col-md-10 mx-auto">
+  <h4 class="mb-4">Edit a knowledge scope</h4>
+
+  <form
+    id="editScopeForm"
+    hx-put="/admin/scopes/save"
+    hx-target="#admin"
+    hx-swap="outerHTML"
+  >
+    <input type="hidden" name="id" value="{{scope.id}}" />
+    <div class="mb-4">
+      <label for="scopeName" class="form-label">Scope Name</label>
+      <input
+        type="text"
+        class="form-control"
+        id="scopeName"
+        name="name"
+        required
+        value="{{scope.name}}"
+      />
+      <div class="form-text">Enter a unique name for this knowledge scope</div>
+    </div>
+
+    <div class="mb-4">
+      <label for="scopeDescription" class="form-label">Scope Description</label>
+      <textarea
+        class="form-control"
+        id="scopeDescription"
+        name="description"
+        rows="4"
+        required
+      >{{scope.description}}</textarea
+      >
+      <div class="form-text">
+        Provide a detailed description of this knowledge scope
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-start mt-4">
+      <button
+        type="button"
+        class="btn btn-outline-secondary me-2"
+        hx-get="/admin/scopes/cancel"
+        hx-target="#admin"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary">
+        <span
+          class="spinner-border spinner-border-sm htmx-indicator"
+          role="status"
+          aria-hidden="true"
+          style="display: none"
+        ></span>
+        Save
+      </button>
+    </div>
+  </form>
+</div>

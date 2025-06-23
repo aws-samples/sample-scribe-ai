@@ -1,0 +1,51 @@
+services:
+  postgres:
+    container_name: postgres
+    image: public.ecr.aws/docker/library/postgres:latest
+    env_file: .env
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./database.sql:/docker-entrypoint-initdb.d/create_tables.sql
+    ports:
+      - "5432:5432"
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    container_name: scribe-web
+    image: scribe-web
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+      POSTGRES_HOST: postgres
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel:4317
+      OTEL_RESOURCE_ATTRIBUTES: service.namespace=scribe-ai.local,service.name=web
+    env_file: .env
+    ports:
+      - "8080:8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /app/tmp
+    depends_on:
+      - postgres
+      - otel
+
+  otel:
+    image: public.ecr.aws/aws-observability/aws-otel-collector:latest
+    command: ["--config=/etc/ecs/ecs-default-config.yaml"]
+    env_file: .env
+    environment:
+      AWS_REGION: ${AWS_REGION}
+      AWS_DEFAULT_REGION: ${AWS_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+
+volumes:
+  db:
+    driver: local

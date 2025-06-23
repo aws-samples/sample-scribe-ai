@@ -1,0 +1,10 @@
+Flask
+boto3
+markdown2
+psycopg[binary]
+gunicorn
+aws-opentelemetry-distro
+opentelemetry-instrumentation-psycopg
+requests
+authlib
+reportlab

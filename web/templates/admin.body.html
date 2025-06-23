@@ -1,0 +1,55 @@
+<div id="admin" class="col-12">
+  <h5 class="mb-4">Knowledge Scopes</h5>
+
+  <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    {% for scope in scopes %}
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">{{scope.name}}</h5>
+        </div>
+        <div class="card-body">
+          {% if scope.description %}
+          <p class="card-text">{{scope.description}}</p>
+          {% else %}
+          <p class="card-text text-muted">No description available</p>
+          {% endif %}
+          <div class="mt-3">
+            <a
+              href="#"
+              class="card-link text-decoration-none"
+              hx-get="/admin/scopes/{{scope.id}}"
+              hx-target="#admin"
+              >Edit</a
+            >
+            <a
+              href="#"
+              class="card-link text-decoration-none"
+              hx-delete="/admin/scopes/{{scope.id}}"
+              hx-confirm="Are you sure you want to delete this scope?"
+              hx-target="#admin"
+              >Delete</a
+            >
+            <a
+              href="#"
+              class="card-link text-decoration-none"
+              hx-get="/admin/topics/{{scope.id}}"
+              hx-target="#admin"
+              >Topics</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button
+    type="button"
+    class="btn btn-primary"
+    hx-get="/admin/scopes/add"
+    hx-target="#admin"
+  >
+    New Scope
+  </button>
+</div>
