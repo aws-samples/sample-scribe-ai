@@ -1,0 +1,58 @@
+diff --git a/events/Dockerfile b/events/Dockerfile
+index fe7ff7c..a627717 100644
+--- a/events/Dockerfile
++++ b/events/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM public.ecr.aws/lambda/python:3.12-arm64
++FROM public.ecr.aws/lambda/python:3.12
+
+ # Set up the directory structure
+ WORKDIR ${LAMBDA_TASK_ROOT}
+diff --git a/iac/ecs.tf b/iac/ecs.tf
+index 0d1df25..d5deaf8 100644
+--- a/iac/ecs.tf
++++ b/iac/ecs.tf
+@@ -36,12 +36,6 @@ module "ecs_service" {
+   cpu    = 1024
+   memory = 2048
+
+-  # Set ARM64 architecture for the task
+-  runtime_platform = {
+-    operating_system_family = "LINUX"
+-    cpu_architecture        = "ARM64"
+-  }
+-
+   # supports external task def deployments
+   # by ignoring changes to task definition and desired count
+   ignore_task_definition_changes = true
+diff --git a/iac/lambda.tf b/iac/lambda.tf
+index c0c67df..978bc2a 100644
+--- a/iac/lambda.tf
++++ b/iac/lambda.tf
+@@ -14,7 +14,6 @@ resource "docker_image" "lambda_image" {
+   build {
+     context    = "${path.module}/.."
+     dockerfile = "events/Dockerfile"
+-    platform   = "linux/arm64"
+   }
+
+   depends_on = [aws_ecr_repository.lambda]
+@@ -36,7 +35,6 @@ resource "aws_lambda_function" "message_processor" {
+   package_type = "Image"
+   image_uri    = docker_registry_image.lambda_registry_image.name
+
+-  architectures = ["arm64"]
+   timeout       = 120
+   memory_size   = 256
+   role          = aws_iam_role.lambda_role.arn
+diff --git a/web/Makefile b/web/Makefile
+index 8308bd5..8fdc59f 100644
+--- a/web/Makefile
++++ b/web/Makefile
+@@ -1,5 +1,5 @@
+ app := scribe
+-platform := linux/arm64
++platform := linux/amd64
+
+ all: help
+
