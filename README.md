@@ -21,6 +21,10 @@ Scribe AI transforms natural conversations with experts into structured, AI-read
 - Auto-scaling architecture (see docs below)
 - OpenTelemetry tracing support using AWS X-Ray
 
+## Architecture
+
+![architecture](./architecture.png)
+
 ## Deployment
 
 Follow these 5 steps to deploy this solution to your AWS account:

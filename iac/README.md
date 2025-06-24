@@ -1,7 +1,5 @@
 # IaC
 
-![architecture](./architecture.png)
-
 This repo uses [asdf](https://asdf-vm.com/) to manage the `terraform` CLI and the various other tools it depends upon.
 
 ```
