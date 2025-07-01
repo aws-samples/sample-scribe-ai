@@ -113,8 +113,15 @@ resource "aws_cognito_user_group" "default" {
 
 # Add a domain for the Cognito User Pool (required for managed login)
 resource "aws_cognito_user_pool_domain" "main" {
-  domain       = "${var.name}-login"
+  domain       = "${var.name}-login-${random_string.domain_suffix.result}"
   user_pool_id = aws_cognito_user_pool.main.id
+}
+
+# Random string to ensure domain uniqueness
+resource "random_string" "domain_suffix" {
+  length  = 8
+  special = false
+  upper   = false
 }
 
 # Configure the managed login branding
