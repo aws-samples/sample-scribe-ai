@@ -37,8 +37,9 @@ Follow these 5 steps to deploy this solution to your AWS account:
 
 ### 1. Setup/Install prerequisites
 
-- Ensure access to a POSIX-compatible command-line shell that can run bash-like commands. Tested on MacOS but should work on Linux or Windows via WSL (Windows Subsystem for Linux). Note: Instructions will not work on Windows command-line or PowerShell.
 - [Enable the Bedrock models you'll use for KB ingestion and app generation](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
+- IAM permissions to deploy AWS resources. See the [IAM policy](./policy.json) for the minimum set of permissions required to perform the deployment.
+- Ensure access to a POSIX-compatible command-line shell that can run bash-like commands. Tested on MacOS but should work on Linux or Windows via WSL (Windows Subsystem for Linux). Note: Instructions will not work on Windows command-line or PowerShell.
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 - [Terraform](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)

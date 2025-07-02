@@ -1,0 +1,475 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"sts:GetCallerIdentity"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"cloudformation:CreateResource",
+				"cloudformation:DeleteResource",
+				"cloudformation:GetResource",
+				"cloudformation:UpdateResource",
+				"cloudformation:ListResources",
+				"cloudformation:GetResourceRequestStatus"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"cloudcontrol:CreateResource",
+				"cloudcontrol:DeleteResource",
+				"cloudcontrol:GetResource",
+				"cloudcontrol:UpdateResource",
+				"cloudcontrol:ListResources",
+				"cloudcontrol:GetResourceRequestStatus",
+				"cloudcontrol:CancelResourceRequest"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"bedrock:CreateKnowledgeBase",
+				"bedrock:DeleteKnowledgeBase",
+				"bedrock:GetKnowledgeBase",
+				"bedrock:UpdateKnowledgeBase",
+				"bedrock:ListKnowledgeBases",
+				"bedrock:CreateDataSource",
+				"bedrock:DeleteDataSource",
+				"bedrock:GetDataSource",
+				"bedrock:UpdateDataSource",
+				"bedrock:ListDataSources",
+				"bedrock:StartIngestionJob",
+				"bedrock:GetIngestionJob",
+				"bedrock:ListIngestionJobs",
+				"bedrock:AllowVendedLogDeliveryForResource",
+				"bedrock:ListPrompts",
+				"bedrock:GetPrompt",
+				"bedrock:UpdatePrompt",
+				"bedrock:DeletePrompt",
+				"bedrock:CreatePrompt",
+				"bedrock:CreatePromptVersion",
+				"bedrock:TagResource",
+				"bedrock:UntagResource",
+				"bedrock:ListTagsForResource",
+				"bedrock:InvokeModel",
+				"bedrock:InvokeModelWithResponseStream",
+				"bedrock:ListFoundationModels",
+				"bedrock:GetFoundationModel"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"bedrock-agent:CreatePrompt",
+				"bedrock-agent:DeletePrompt",
+				"bedrock-agent:GetPrompt",
+				"bedrock-agent:UpdatePrompt",
+				"bedrock-agent:ListPrompts",
+				"bedrock-agent:CreatePromptVersion",
+				"bedrock-agent:TagResource",
+				"bedrock-agent:UntagResource",
+				"bedrock-agent:ListTagsForResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"aoss:CreateCollection",
+				"aoss:DeleteCollection",
+				"aoss:BatchGetCollection",
+				"aoss:ListCollections",
+				"aoss:CreateSecurityPolicy",
+				"aoss:DeleteSecurityPolicy",
+				"aoss:GetSecurityPolicy",
+				"aoss:ListSecurityPolicies",
+				"aoss:UpdateSecurityPolicy",
+				"aoss:CreateAccessPolicy",
+				"aoss:DeleteAccessPolicy",
+				"aoss:GetAccessPolicy",
+				"aoss:ListAccessPolicies",
+				"aoss:UpdateAccessPolicy"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"scheduler:CreateSchedule",
+				"scheduler:DeleteSchedule",
+				"scheduler:GetSchedule",
+				"scheduler:UpdateSchedule",
+				"scheduler:ListSchedules",
+				"scheduler:TagResource",
+				"scheduler:UntagResource",
+				"scheduler:ListTagsForResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"application-autoscaling:RegisterScalableTarget",
+				"application-autoscaling:DeregisterScalableTarget",
+				"application-autoscaling:DescribeScalableTargets",
+				"application-autoscaling:PutScalingPolicy",
+				"application-autoscaling:DeleteScalingPolicy",
+				"application-autoscaling:DescribeScalingPolicies",
+				"application-autoscaling:TagResource",
+				"application-autoscaling:UntagResource",
+				"application-autoscaling:ListTagsForResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"autoscaling:PutScalingPolicy"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"cloudwatch:DescribeAlarms",
+				"cloudwatch:PutMetricAlarm"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"cognito-idp:CreateUserPool",
+				"cognito-idp:DescribeUserPoolDomain",
+				"cognito-idp:CreateGroup",
+				"cognito-idp:CreateManagedLoginBranding",
+				"cognito-idp:CreateUserPoolClient",
+				"cognito-idp:CreateUserPoolDomain",
+				"cognito-idp:DeleteGroup",
+				"cognito-idp:DeleteManagedLoginBranding",
+				"cognito-idp:DeleteUserPool",
+				"cognito-idp:DeleteUserPoolClient",
+				"cognito-idp:DeleteUserPoolDomain",
+				"cognito-idp:DescribeManagedLoginBranding",
+				"cognito-idp:DescribeUserPool",
+				"cognito-idp:DescribeUserPoolClient",
+				"cognito-idp:GetGroup",
+				"cognito-idp:GetUserPoolMfaConfig"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ec2:CreateTags",
+				"ec2:DescribeAddresses",
+				"ec2:DescribeAddressesAttribute",
+				"ec2:DescribeAvailabilityZones",
+				"ec2:DescribeInternetGateways",
+				"ec2:DescribeNatGateways",
+				"ec2:DescribeNetworkAcls",
+				"ec2:DescribeNetworkInterfaces",
+				"ec2:DescribeRouteTables",
+				"ec2:DescribeSecurityGroupRules",
+				"ec2:DescribeSecurityGroups",
+				"ec2:DescribeSubnets",
+				"ec2:DescribeVpcs",
+				"ec2:DisassociateAddress",
+				"ec2:DisassociateRouteTable",
+				"ec2:ReleaseAddress",
+				"ec2:AllocateAddress",
+				"ec2:AttachInternetGateway",
+				"ec2:CreateInternetGateway",
+				"ec2:DeleteInternetGateway",
+				"ec2:DetachInternetGateway",
+				"ec2:CreateNatGateway",
+				"ec2:DeleteNatGateway",
+				"ec2:CreateNetworkAclEntry",
+				"ec2:DeleteNetworkAclEntry",
+				"ec2:AssociateRouteTable",
+				"ec2:CreateRoute",
+				"ec2:CreateRouteTable",
+				"ec2:DeleteRoute",
+				"ec2:DeleteRouteTable",
+				"ec2:AuthorizeSecurityGroupEgress",
+				"ec2:AuthorizeSecurityGroupIngress",
+				"ec2:CreateSecurityGroup",
+				"ec2:DeleteSecurityGroup",
+				"ec2:RevokeSecurityGroupEgress",
+				"ec2:RevokeSecurityGroupIngress",
+				"ec2:CreateSubnet",
+				"ec2:DeleteSubnet",
+				"ec2:CreateVpc",
+				"ec2:DescribeVpcAttribute",
+				"ec2:ModifyVpcAttribute",
+				"ec2:DeleteVpc",
+				"ec2:DeleteNetworkInterface",
+				"ec2:CreateNetworkInterface",
+				"ec2:DetachNetworkInterface"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ecr:GetAuthorizationToken",
+				"ecr:BatchCheckLayerAvailability",
+				"ecr:BatchGetImage",
+				"ecr:CompleteLayerUpload",
+				"ecr:CreateRepository",
+				"ecr:DeleteRepository",
+				"ecr:DescribeRepositories",
+				"ecr:GetRepositoryPolicy",
+				"ecr:InitiateLayerUpload",
+				"ecr:ListTagsForResource",
+				"ecr:PutImage",
+				"ecr:SetRepositoryPolicy",
+				"ecr:TagResource",
+				"ecr:UploadLayerPart"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ecs:DeregisterTaskDefinition",
+				"ecs:DescribeTaskDefinition",
+				"ecs:CreateCluster",
+				"ecs:DeleteCluster",
+				"ecs:DescribeClusters",
+				"ecs:PutClusterCapacityProviders",
+				"ecs:TagResource",
+				"ecs:CreateService",
+				"ecs:DeleteService",
+				"ecs:DescribeServices",
+				"ecs:UpdateService",
+				"ecs:RegisterTaskDefinition"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreatePolicy",
+				"iam:DeletePolicy",
+				"iam:GetPolicy",
+				"iam:GetPolicyVersion",
+				"iam:ListPolicyVersions",
+				"iam:TagPolicy",
+				"iam:AttachRolePolicy",
+				"iam:CreateRole",
+				"iam:CreateServiceLinkedRole",
+				"iam:DeleteRole",
+				"iam:DeleteRolePolicy",
+				"iam:DetachRolePolicy",
+				"iam:GetRole",
+				"iam:GetRolePolicy",
+				"iam:TagRole",
+				"iam:PassRole",
+				"iam:ListAttachedRolePolicies",
+				"iam:ListInstanceProfilesForRole",
+				"iam:ListRolePolicies",
+				"iam:PutRolePolicy"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreateServiceLinkedRole"
+			],
+			"Resource": "arn:aws:iam::*:role/aws-service-role/bedrock.amazonaws.com/*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreateServiceLinkedRole"
+			],
+			"Resource": "arn:aws:iam::*:role/aws-service-role/cloudcontrolapi.amazonaws.com/*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"kms:CreateGrant",
+				"kms:Decrypt",
+				"kms:DescribeKey",
+				"kms:Encrypt",
+				"kms:GenerateDataKey"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"lambda:CreateEventSourceMapping",
+				"lambda:ListTags",
+				"lambda:DeleteEventSourceMapping",
+				"lambda:GetEventSourceMapping",
+				"lambda:AddPermission",
+				"lambda:CreateFunction",
+				"lambda:DeleteFunction",
+				"lambda:GetFunction",
+				"lambda:GetFunctionCodeSigningConfig",
+				"lambda:GetPolicy",
+				"lambda:ListVersionsByFunction",
+				"lambda:RemovePermission",
+				"lambda:TagResource",
+				"lambda:UntagResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"logs:DescribeDeliveries",
+				"logs:DescribeLogGroups",
+				"logs:ListTagsForResource",
+				"logs:CreateDelivery",
+				"logs:DeleteDeliveryDestination",
+				"logs:DeleteDeliverySource",
+				"logs:GetDeliveryDestination",
+				"logs:GetDeliveryDestinationPolicy",
+				"logs:PutDeliveryDestination",
+				"logs:GetDeliverySource",
+				"logs:PutDeliverySource",
+				"logs:DeleteDelivery",
+				"logs:GetDelivery",
+				"logs:CreateLogGroup",
+				"logs:DeleteLogGroup",
+				"logs:DeleteSubscriptionFilter",
+				"logs:DescribeSubscriptionFilters",
+				"logs:PutRetentionPolicy",
+				"logs:PutSubscriptionFilter",
+				"logs:TagResource",
+				"logs:CreateLogDelivery",
+				"logs:ListLogDeliveries",
+				"logs:DeleteLogDelivery"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"rds:AddTagsToResource",
+				"rds:DescribeDBClusters",
+				"rds:DescribeDBEngineVersions",
+				"rds:DescribeDBInstances",
+				"rds:DescribeDBSubnetGroups",
+				"rds:DescribeGlobalClusters",
+				"rds:ListTagsForResource",
+				"rds:CreateDBCluster",
+				"rds:CreateDBClusterSnapshot",
+				"rds:DeleteDBCluster",
+				"rds:CreateDBInstance",
+				"rds:CreateDBSnapshot",
+				"rds:CreateTenantDatabase",
+				"rds:DeleteDBInstance",
+				"rds:DeleteTenantDatabase",
+				"rds:CreateDBSubnetGroup",
+				"rds:DeleteDBSubnetGroup"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"rds-data:ExecuteStatement",
+				"rds-data:BatchExecuteStatement",
+				"rds-data:BeginTransaction",
+				"rds-data:CommitTransaction",
+				"rds-data:RollbackTransaction"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:HeadObject",
+				"s3:ListBucket",
+				"s3:GetObject",
+				"s3:PutObject",
+				"s3:DeleteObject",
+				"s3:CreateBucket",
+				"s3:DeleteBucket",
+				"s3:GetAccelerateConfiguration",
+				"s3:GetBucketAcl",
+				"s3:GetBucketCORS",
+				"s3:GetBucketLogging",
+				"s3:GetBucketObjectLockConfiguration",
+				"s3:GetBucketPolicy",
+				"s3:GetBucketPublicAccessBlock",
+				"s3:GetBucketRequestPayment",
+				"s3:GetBucketTagging",
+				"s3:GetBucketVersioning",
+				"s3:GetBucketWebsite",
+				"s3:GetEncryptionConfiguration",
+				"s3:GetLifecycleConfiguration",
+				"s3:GetReplicationConfiguration",
+				"s3:PutBucketPolicy",
+				"s3:PutBucketPublicAccessBlock"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"secretsmanager:CreateSecret",
+				"secretsmanager:DeleteSecret",
+				"secretsmanager:DescribeSecret",
+				"secretsmanager:GetResourcePolicy",
+				"secretsmanager:GetSecretValue",
+				"secretsmanager:PutSecretValue",
+				"secretsmanager:TagResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"servicediscovery:CreateHttpNamespace",
+				"servicediscovery:GetOperation",
+				"servicediscovery:ListServices",
+				"servicediscovery:ListTagsForResource",
+				"servicediscovery:TagResource",
+				"servicediscovery:DeleteNamespace",
+				"servicediscovery:GetNamespace",
+				"servicediscovery:GetService"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"sqs:CreateQueue",
+				"sqs:DeleteQueue",
+				"sqs:SetQueueAttributes",
+				"sqs:TagQueue",
+				"sqs:GetQueueAttributes",
+				"sqs:ListQueueTags"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"apigateway:GET",
+				"apigateway:POST",
+				"apigateway:PUT",
+				"apigateway:PATCH",
+				"apigateway:DELETE",
+				"apigateway:TagResource",
+				"apigateway:UntagResource"
+			],
+			"Resource": "*"
+		}
+	]
+}
