@@ -2,7 +2,7 @@ import logging
 from flask import render_template, Response
 
 import sqs
-from auth import login_required, decorate_interview_with_username, decorate_interviews_with_usernames
+from auth import login_required, decorate_interview_with_username, decorate_interviews_with_usernames, get_current_user_id
 from shared.data.database import Database
 from shared.data.data_models import InterviewStatus
 from shared.events import EventType
@@ -16,9 +16,12 @@ def register_routes(app, db: Database):
     def reviews():
         """reviews"""
 
+        # users can't review their own interviews
+        current_user_id = get_current_user_id()
+
         # get reviews
         logging.info("db.get_available_reviews()")
-        interviews = db.get_available_reviews()
+        interviews = db.get_available_reviews(current_user_id)
 
         # decorate interviews with user name info from cognito
         decorate_interviews_with_usernames(interviews)
@@ -31,6 +34,7 @@ def register_routes(app, db: Database):
                 pending.append(interview)
             elif interview.status in [InterviewStatus.PENDING_APPROVAL, InterviewStatus.APPROVED, InterviewStatus.REJECTED]:
                 completed.append(interview)
+
         return render_template("reviews.html", pending=pending, completed=completed)
 
     @app.route("/review/start/<interview_id>")
@@ -61,6 +65,12 @@ def register_routes(app, db: Database):
         status = InterviewStatus.PENDING_APPROVAL
         logging.info(f"updating interview status to {status}")
         interview.status = status
+        
+        # Set approval fields
+        from datetime import datetime, timezone
+        interview.approved_by_user_id = get_current_user_id()
+        interview.approved_on = datetime.now(timezone.utc)
+        
         db.update_interview(interview)
 
         # post a msg to sqs to generate summary
@@ -70,7 +80,7 @@ def register_routes(app, db: Database):
 
         # redirect to reviews
         response = Response("Resource updated")
-        response.headers['HX-Redirect'] = "/reviews"
+        response.headers['HX-Redirect'] = "/interviews"
         return response
 
     @app.route("/review/reject/<interview_id>", methods=["POST"])
@@ -102,5 +112,5 @@ def register_routes(app, db: Database):
 
         # redirect to reviews
         response = Response("Resource updated")
-        response.headers['HX-Redirect'] = "/reviews"
+        response.headers['HX-Redirect'] = "/interviews"
         return response

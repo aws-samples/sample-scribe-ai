@@ -41,7 +41,8 @@ resource "aws_bedrockagent_data_source" "main" {
   data_source_configuration {
     type = "S3"
     s3_configuration {
-      bucket_arn = aws_s3_bucket.main.arn
+      bucket_arn         = aws_s3_bucket.main.arn
+      inclusion_prefixes = ["kb"]
     }
   }
   data_deletion_policy = "RETAIN"

@@ -1,0 +1,38 @@
+{% extends "base.html" %} {% set active_page = 'kb' %} {% block content %}
+
+<div id="kb" class="col-12">
+  <h5 class="mb-4">Knowledge Base</h5>
+
+  {% if scopes %}
+    <!-- Knowledge Scope Dropdown -->
+    <div class="mb-4">
+      <label for="scopeSelect" class="form-label">Knowledge Scope</label>
+      <select
+        class="form-select"
+        id="scope-select"
+        name="scope_id"
+        hx-get="/kb/topics"
+        hx-target="#topicsContainer"
+      >
+        <option value="">Select a scope...</option>
+        {% for scope in scopes %}
+        <option value="{{scope.id}}" {% if loop.first %}selected{% endif %}>
+          {{scope.name}}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {% if has_selected_scope %}
+    <h6 class="mb-3">Topics</h6>
+    <div id="topicsContainer">
+      {% include "kb.body.html" with context %}
+    </div>
+    {% endif %}
+  {% else %}
+    <div>
+      No scopes have been defined. Please create a scope in the Admin section first.
+    </div>
+  {% endif %}
+
+{% endblock %}

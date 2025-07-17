@@ -145,8 +145,16 @@ class Database():
                 i.status,
                 i.data,
                 i.completed,
-                i.summary
-            FROM interview
+                i.summary,
+                t.name AS topic_name,
+                t.description AS topic_description,
+                t.areas AS topic_areas,
+                s.name AS scope_name,
+                i.approved_by_user_id,
+                i.approved_on
+            FROM interview i
+            JOIN topic t ON i.topic_id = t.id
+            JOIN scope s ON t.scope_id = s.id
             ORDER BY created DESC
             LIMIT %s
         """
@@ -159,13 +167,20 @@ class Database():
         results = []
         for record in records:
             r = InterviewRecord(
-                id=record[4],
-                status=record[3],
-                topic_name=record[1],
-                topic_description=record[2],
-                scope_name=record[0],
-                completed=record[5],
-                user_id=record[6]
+                id=record[0],
+                created=record[1],
+                user_id=record[2],
+                topic_id=record[3],
+                status=record[4],
+                data=record[5],
+                completed=record[6],
+                summary=record[7],
+                topic_name=record[8],
+                topic_description=record[9],
+                topic_areas=record[10],
+                scope_name=record[11],
+                approved_by_user_id=record[12],
+                approved_on=record[13],
             )
             results.append(r.to_interview())
         return results
@@ -456,6 +471,44 @@ class Database():
             })
         return results
 
+    def list_approved_interviews_by_topic(self, topic_id):
+        """list approved interviews by topic id"""
+        query = """
+            SELECT i.id, i.created, i.topic_id, i.user_id, i.status,
+                   i.data, i.completed, i.summary, t.name as topic_name,
+                   t.description as topic_description, t.areas as topic_areas,
+                   s.name as scope_name
+            FROM interview i
+            JOIN topic t ON i.topic_id = t.id
+            JOIN scope s ON t.scope_id = s.id
+            WHERE i.topic_id = %s AND i.status = %s
+            ORDER BY i.completed DESC
+        """
+        logging.info(f"query: {query}")
+        values = (topic_id, InterviewStatus.APPROVED.value)
+        logging.info(f"values: {values}")
+        with self.connect() as conn:
+            records = conn.execute(query, values).fetchall()
+
+        results = []
+        for record in records:
+            interview_record = InterviewRecord(
+                id=record[0],
+                created=record[1],
+                topic_id=record[2],
+                user_id=record[3],
+                status=record[4],
+                data=record[5],
+                completed=record[6],
+                summary=record[7],
+                topic_name=record[8],
+                topic_description=record[9],
+                topic_areas=record[10],
+                scope_name=record[11],
+            )
+            results.append(interview_record.to_interview())
+        return results
+
     def update_conversation_summary(self, conversation_id, summary):
         """updates a conversation summary"""
 
@@ -539,6 +592,53 @@ class Database():
             results.append(r.to_interview())
         return results
 
+    def get_inflight_interviews(self, topic_id):
+        """
+        Returns interviews for a topic in any status other than approved/rejected
+        Joins with topic and scope tables to return additional information
+        Returns: scope_name, topic_name, topic_description, status, interview_id, user_id, created
+        """
+
+        query = """
+            SELECT
+                s.name AS scope_name,
+                t.name AS topic_name,
+                t.description AS topic_description,
+                i.status,
+                i.id AS interview_id,
+                i.user_id,
+                i.created
+            FROM interview i
+            JOIN topic t ON i.topic_id = t.id
+            JOIN scope s ON t.scope_id = s.id
+            WHERE i.topic_id = %s
+            AND i.status not in (%s,%s)
+            ORDER BY i.created DESC
+        """
+        logging.info(f"query: {query}")
+        values = (
+            topic_id,
+            InterviewStatus.APPROVED.value,
+            InterviewStatus.REJECTED.value,
+        )
+        logging.info(f"values: {values}")
+        with self.connect() as conn:
+            records = conn.execute(query, values).fetchall()
+
+        results = []
+        for record in records:
+            r = InterviewRecord(
+                id=record[4],
+                status=record[3],
+                topic_name=record[1],
+                topic_description=record[2],
+                scope_name=record[0],
+                user_id=record[5],
+                created=record[6],
+            )
+            results.append(r.to_interview())
+        return results
+
     def update_interview(self, interview):
         """updates an interview object"""
 
@@ -547,11 +647,13 @@ class Database():
             SET
                 status = %s,
                 data = %s,
-                summary=%s
+                summary=%s,
+                approved_by_user_id = %s,
+                approved_on = %s
             WHERE id = %s
         """
         record = interview.to_record()
-        values = (record.status, record.data, record.summary, record.id)
+        values = (record.status, record.data, record.summary, record.approved_by_user_id, record.approved_on, record.id)
         logging.info(f"query: {query}")
         logging.info(f"values: {values}")
 
@@ -574,7 +676,9 @@ class Database():
                 t.name AS topic_name,
                 t.description AS topic_description,
                 t.areas AS topic_areas,
-                s.name AS scope_name
+                s.name AS scope_name,
+                i.approved_by_user_id,
+                i.approved_on
             FROM interview i
             JOIN topic t ON i.topic_id = t.id
             JOIN scope s ON t.scope_id = s.id
@@ -601,28 +705,35 @@ class Database():
                 topic_description=record[9],
                 topic_areas=record[10],
                 scope_name=record[11],
+                approved_by_user_id=record[12],
+                approved_on=record[13],
             )
             return record.to_interview()
         else:
             return None
 
-    def get_interview_by_user_topic(self, user_id, topic_id) -> Interview:
-        """returns an interview by user and topic"""
+    def get_latest_approved_interview(self, topic_id) -> Interview:
+        """fetch the latest approved interview by topic"""
 
         query = """
             SELECT
-                i.id,
-                i.created,
-                i.user_id,
-                i.topic_id,
-                i.status,
-                i.data,
-                i.completed,
-                i.summary
-            FROM interview i
-            WHERE i.user_id = %s AND i.topic_id = %s
+                id,
+                created,
+                user_id,
+                topic_id,
+                status,
+                data,
+                completed,
+                summary,
+                approved_by_user_id,
+                approved_on
+            FROM interview
+            WHERE topic_id = %s
+            AND status = %s
+            ORDER BY completed DESC
+            LIMIT 1
         """
-        values = (user_id, topic_id,)
+        values = (topic_id, InterviewStatus.APPROVED.value)
         logging.info(f"query: {query}")
         logging.info(f"values: {values}")
 
@@ -639,6 +750,57 @@ class Database():
                 data=record[5],
                 completed=record[6],
                 summary=record[7],
+                approved_by_user_id=record[8],
+                approved_on=record[9],
+            )
+            return record.to_interview()
+        else:
+            return None
+
+    def get_inflight_interview_by_user_topic(self, user_id, topic_id) -> Interview:
+        """returns an in-flight interview by user and topic"""
+
+        query = """
+            SELECT
+                i.id,
+                i.created,
+                i.user_id,
+                i.topic_id,
+                i.status,
+                i.data,
+                i.completed,
+                i.summary,
+                i.approved_by_user_id,
+                i.approved_on
+            FROM interview i
+            WHERE i.user_id = %s AND i.topic_id = %s
+            AND i.status not in (%s,%s)
+        """
+        values = (
+            user_id,
+            topic_id,
+            InterviewStatus.APPROVED.value,
+            InterviewStatus.REJECTED.value,
+        )
+
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            record = conn.execute(query, values).fetchone()
+
+        if record:
+            record = InterviewRecord(
+                id=record[0],
+                created=record[1],
+                user_id=record[2],
+                topic_id=record[3],
+                status=record[4],
+                data=record[5],
+                completed=record[6],
+                summary=record[7],
+                approved_by_user_id=record[8],
+                approved_on=record[9],
             )
             return record.to_interview()
         else:
@@ -680,9 +842,10 @@ class Database():
 
         return record[0] if record else None
 
-    def get_available_reviews(self):
+    def get_available_reviews(self, user_id):
         """
-        Returns interviews that are in a status to be reviewed.
+        Returns interviews that are in a status to be reviewed
+        and not for the same user.
         """
 
         query = """
@@ -697,16 +860,15 @@ class Database():
             FROM interview i
             JOIN topic t ON i.topic_id = t.id
             JOIN scope s ON t.scope_id = s.id
-            WHERE i.status IN (%s, %s, %s, %s, %s, %s)
+            WHERE i.status IN (%s, %s, %s)
+            AND i.user_id != %s
             ORDER BY i.created DESC
         """
         values = (
             InterviewStatus.PROCESSING.value,
             InterviewStatus.PENDING_REVIEW.value,
             InterviewStatus.REVIEWING.value,
-            InterviewStatus.PENDING_APPROVAL.value,
-            InterviewStatus.APPROVED.value,
-            InterviewStatus.REJECTED.value,
+            user_id,
         )
         logging.info(f"query: {query}")
         logging.info(f"values: {values}")

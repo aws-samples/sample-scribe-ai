@@ -18,14 +18,21 @@ def register_routes(app, db: Database):
 
         # Get the interview details
         interview = db.get_interview(interview_id)
-
         if not interview:
             return render_template("error.html", message="Interview not found"), 404
+
+        # determine if this is the latest approved interview
+        latest = db.get_latest_approved_interview(interview.topic_id)
+        archived = False
+        if latest and latest.id != interview.id:
+            archived = True
 
         try:
             # Get the S3 key for the document
             key = s3.get_interview_document_key(
                 interview.topic_name, interview.id)
+            if archived:
+                key = s3.get_archive_key(key)
 
             # Generate a presigned URL for the PDF
             presigned_url = s3.generate_presigned_url(key)

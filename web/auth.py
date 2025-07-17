@@ -11,7 +11,7 @@ from botocore.exceptions import ClientError
 import logging
 
 from shared.config import config
-from shared.data.data_models import User
+from shared.data.data_models import User, Interview
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -264,6 +264,23 @@ def get_user_groups(cognito, username: str) -> List[str]:
         return []
 
 
+def get_user_by_id(user_id: str) -> Optional[User]:
+    """
+    Get a user by their ID from Cognito
+
+    Args:
+        user_id: The user's Cognito sub (unique identifier)
+
+    Returns:
+        User object if found, None otherwise
+    """
+    users = get_cognito_users()
+    for user in users:
+        if user.id == user_id:
+            return user
+    return None
+
+
 def decorate_interview_with_username(interview):
     """
     Decorates an interview object with the username from Cognito
@@ -285,7 +302,7 @@ def decorate_interview_with_username(interview):
     return interview
 
 
-def decorate_interviews_with_usernames(interviews):
+def decorate_interviews_with_usernames(interviews) -> List[Interview]:
     """
     Decorates a list of interview objects with usernames from Cognito
 
@@ -299,8 +316,14 @@ def decorate_interviews_with_usernames(interviews):
     users = get_cognito_users()
 
     for user in users:
+        print(f"evaling {user.id}, {user.username}")
         for interview in interviews:
+            # Set interviewer username
             if interview.user_id == user.id:
                 interview.user_name = user.username
+
+            # Set approver username if approved_by_user_id exists
+            if hasattr(interview, 'approved_by_user_id') and interview.approved_by_user_id == user.id:
+                interview.approved_by_user_name = user.username
 
     return interviews

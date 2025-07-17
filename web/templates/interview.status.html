@@ -1,0 +1,21 @@
+{% if interview.status.value == 'notstarted' %}
+<span class="badge bg-info">Not Started</span>
+{% elif interview.status.value == 'started' %}
+<span class="badge bg-primary">Interviewing</span>
+{% elif interview.status.value == 'processing' %}
+<span class="badge bg-warning">Processing</span>
+{% elif interview.status.value == 'pendingreview' %}
+<span class="badge bg-info">Pending Review</span>
+{% elif interview.status.value == 'reviewing' %}
+<span class="badge bg-primary">Reviewing</span>
+{% elif interview.status.value == 'pendingapproval' %}
+<span class="badge bg-warning">Pending Approval</span>
+{% elif interview.status.value == 'approved' %}
+<span class="badge bg-success">Approved</span>
+{% elif interview.status.value == 'rejected' %}
+<span class="badge bg-danger">Rejected</span>
+{% elif interview.status.value == 'editing' %}
+<span class="badge bg-danger">Editing</span>
+{% else %}
+<span class="badge bg-secondary">{{ interview.status.value|title }}</span>
+{% endif %}

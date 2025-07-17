@@ -22,7 +22,9 @@ CREATE TABLE IF NOT EXISTS interview (
 	status VARCHAR NOT NULL,
 	data JSONB,
 	completed TIMESTAMP WITH TIME ZONE,
-	summary VARCHAR
+	summary VARCHAR,
+	approved_by_user_id VARCHAR,
+	approved_on TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE IF NOT EXISTS conversation (

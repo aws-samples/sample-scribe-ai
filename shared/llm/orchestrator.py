@@ -1,6 +1,7 @@
 import json
 import logging
 import boto3
+import datetime
 
 from shared.config import config
 from shared import log
@@ -164,8 +165,9 @@ def generate_pdf(topic: str, questions: list[Question]):
 
     # build prompt
     prompt = get_prompt(config.document_generator_id)
-    prompt = prompt.replace("{{topic}}", topic).replace(
-        "{{interview}}", interview)
+    prompt = prompt.replace("{{topic}}", topic)
+    prompt = prompt.replace("{{interview}}", interview)
+    prompt = prompt.replace("{{date}}", datetime.datetime.now().strftime("%b %-d, %Y"))
     messages = [user_message(prompt)]
 
     tool_config = {

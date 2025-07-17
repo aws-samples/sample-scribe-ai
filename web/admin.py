@@ -1,9 +1,10 @@
 import uuid
+import json
 import logging
 from datetime import datetime, timezone
 from flask import request, render_template, current_app, current_app
 from shared.data import database
-from auth import login_required, admin_required, get_cognito_users
+from auth import login_required, admin_required, get_cognito_users, decorate_interviews_with_usernames
 from typing import List, Dict, Optional
 from botocore.exceptions import ClientError
 from shared.data.data_models import Interview, InterviewStatus
@@ -121,14 +122,21 @@ def register_routes(app, db: database.Database):
         # fetch the list of cognito users
         users = get_cognito_users()
 
-        # see if there is a user assigned to this topic
-        selected_user_id = db.get_assigned_user(id)
+        # fetch in-flight interviews for this topic
+        # and add usernames to interviews
+        interviews = db.get_inflight_interviews(id)
+        interviews = decorate_interviews_with_usernames(interviews)
+
+        # remove users from master list that already have in-flight interviews
+        users = [user for user in users if user.id not in [
+            interview.user_id for interview in interviews]]
 
         return render_template(
             "admin.topic.edit.html",
             topic=topic,
             users=users,
-            selected_user_id=selected_user_id)
+            interviews=interviews,
+        )
 
     @app.route("/admin/topics/save", methods=["PUT"])
     @login_required
@@ -161,13 +169,11 @@ def register_routes(app, db: database.Database):
             logging.info(f"updating topic {id}")
             db.update_topic(id, name, description, areas)
 
-            # is a user assigned yet?
+            # did the admin assign it to a user?
             if user_id:
-
-                # does an interview already exist for this user/topic?
-                # if so, do nothing (user may already be working on it)
-                # if not, create one in notstarted status
-                interview = db.get_interview_by_user_topic(user_id, id)
+                # create a new interview for the user
+                # if there's not an existing one in-flight
+                interview = db.get_inflight_interview_by_user_topic(user_id, id)
                 if interview is None:
                     interview = Interview.new(id, user_id)
                     db.create_interview(interview)

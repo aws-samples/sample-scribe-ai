@@ -11,6 +11,7 @@ Language Requirements:
 Document Structure:
 - Corporate letterhead with logo and document control information
 - Set the author to `Scribe AI`
+- Set the created date to `{{date}}`
 - Executive summary (brief overview without omitting any key points)
 - Table of contents
 - Scope overview and objectives

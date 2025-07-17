@@ -30,7 +30,7 @@
     </div>
 
     <div class="mb-3">
-      <label for="areas" class="form-label">Areas (one per line)</label>
+      <label for="areas" class="form-label">Areas</label>
       <textarea
         class="form-control"
         id="areas"
@@ -42,22 +42,34 @@
       <div class="form-text">Each line will be treated as a separate area.</div>
     </div>
 
+    {% if interviews|length > 0 %}
+    <div class="mb-3">
+      <label for="user_id" class="form-label">In-Progress Interviews</label>
+      <div class="mt-2">
+        {% for interview in interviews %}
+        <div class="p-2 border rounded mb-2">
+          <span class="me-2">Assigned to <strong>{{ interview.user_name or interview.user_id }}</strong> on <span class="utc-time" data-utc="{{ interview.created.isoformat() }}">{{ interview.created.strftime('%b %d at %I:%M %p').replace(' 0', ' ').replace('%p', interview.created.strftime('%p').lower()) }}</span>
+          {% include "interview.status.html" with context %}
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-text">Interviews for this topic that are currently in-progress. If you want a user to redo an interview, you'll need to approve or reject any interiews that are in-progress.</div>
+    </div>
+    {% endif %}
+
     <div class="mb-3">
       <label for="user_id" class="form-label">Assign to User</label>
-      <select 
-        class="form-select" 
-        id="user_id" 
+      <select
+        class="form-select"
+        id="user_id"
         name="user_id"
         aria-label="Select user">
         <option value="">Assign to a user...</option>
         {% for user in users %}
-          <option 
-            value="{{ user['id'] }}"
-            {% if user['id'] == selected_user_id %}selected{% endif %}>
-            {{ user['username'] }}
-          </option>
+          <option value="{{ user['id'] }}"> {{ user['username'] }}</option>
         {% endfor %}
       </select>
+      <div class="form-text">Assigning a user will create a new interview request for this user.</div>
     </div>
 
     <div class="d-flex gap-2">
