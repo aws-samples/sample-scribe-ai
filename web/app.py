@@ -18,9 +18,10 @@ from opentelemetry.instrumentation.botocore import BotocoreInstrumentor
 # Import route modules
 import chatbot
 import interviews
+import reviews
 import admin
 import api
-import reviews
+import kb
 import docs
 
 
@@ -146,9 +147,10 @@ def create_app():
     # Register routes from modules
     chatbot.register_routes(app, db)
     interviews.register_routes(app, db)
+    reviews.register_routes(app, db)
     admin.register_routes(app, db)
     api.register_routes(app, db)
-    reviews.register_routes(app, db)
+    kb.register_routes(app, db)
     docs.register_routes(app, db)
 
     return app

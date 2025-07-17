@@ -2,11 +2,9 @@
   <h5 class="mb-4">Assigned Interviews</h5>
 
   <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
-    {% if interviews|length == 0 %}
-    <div class="col-12 text-center">
-      <p class="text-muted">No interviews have been assigned to you yet.</p>
-    </div>
-    {% endif %} {% for interview in interviews %}
+    {% if assigned|length == 0 %}
+    <p class="text-muted">No interviews have been assigned to you yet.</p>
+    {% endif %} {% for interview in assigned %}
     <div class="col">
       <div class="card h-100">
         <div class="card-header">
@@ -20,10 +18,16 @@
           <div class="text-end mt-auto">
             {% if interview.status.value == 'notstarted' %}
             <div class="d-flex align-items-center justify-content-end">
-              <span id="loading-indicator-{{interview.id}}" class="htmx-indicator me-2">
+              <span
+                id="loading-indicator-{{interview.id}}"
+                class="htmx-indicator me-2"
+              >
                 <div class="d-flex align-items-center">
                   <small class="me-1">Preparing interview</small>
-                  <div class="spinner-border spinner-border-sm spinner-color" role="status"></div>
+                  <div
+                    class="spinner-border spinner-border-sm spinner-color"
+                    role="status"
+                  ></div>
                 </div>
               </span>
               <a
@@ -35,13 +39,18 @@
                 >Start</a
               >
             </div>
-            {% endif %}
-            {% if interview.status.value == 'started' %}
+            {% endif %} {% if interview.status.value == 'started' %}
             <div class="d-flex align-items-center justify-content-end">
-              <span id="loading-indicator-{{interview.id}}" class="htmx-indicator me-2">
+              <span
+                id="loading-indicator-{{interview.id}}"
+                class="htmx-indicator me-2"
+              >
                 <div class="d-flex align-items-center">
                   <small class="me-1">Loading interview</small>
-                  <div class="spinner-border spinner-border-sm spinner-color" role="status"></div>
+                  <div
+                    class="spinner-border spinner-border-sm spinner-color"
+                    role="status"
+                  ></div>
                 </div>
               </span>
               <a
@@ -60,4 +69,128 @@
     </div>
     {% endfor %}
   </div>
+  <h5 class="mb-4">Interviews to Review</h5>
+  <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    {% if reviews|length == 0 %}
+    <p class="text-muted">No reviews available</p>
+    {% endif %} {% for interview in reviews %}
+    <div class="col">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">{{interview.scope_name}}</h5>
+        </div>
+        <div class="card-body d-flex flex-column">
+          <div>
+            <p><strong>{{ interview.topic_name }}</strong></p>
+            <p>
+              Submitted by {{ interview.user_name }} on
+              <span
+                class="utc-time"
+                data-utc="{{ interview.completed.isoformat() }}"
+                >{{ interview.completed.strftime('%b %d at %I:%M %p').replace('
+                0', ' ').replace('%p',
+                interview.completed.strftime('%p').lower()) }}</span
+              >
+            </p>
+          </div>
+          <div class="text-end mt-auto">
+            <a
+              href="#"
+              class="btn btn-primary btn-sm{% if interview.status.value == 'processing' %} disabled{% endif %}"
+              hx-get="/review/start/{{interview.id}}"
+              hx-target="#interview"
+              >{% if interview.status.value == 'pendingreview' %}Start{% elif
+              interview.status.value == 'reviewing' %}Resume{% elif
+              interview.status.value == 'processing' %}Processing{% endif %}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if is_admin %}
+  <h5 class="mb-4">All Interviews (Admin)</h5>
+  <div>
+    {% if all|length == 0 %}
+    <p class="text-muted">No interviews</p>
+    {% else %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Scope</th>
+            <th>Topic</th>
+            <th>User</th>
+            <th>Completion Date</th>
+            <th>Approved By</th>
+            <th>Approved Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for interview in all %}
+          <tr>
+            <td>{{ interview.scope_name }}</td>
+            <td>{{ interview.topic_name }}</td>
+            <td>{{ interview.user_name }}</td>
+            <td>
+              {% if interview.completed %}
+              <span
+                class="utc-time"
+                data-utc="{{ interview.completed.isoformat() }}"
+              >
+                {{ interview.completed.strftime('%b %d, %Y at %I:%M
+                %p').replace(' 0', ' ').replace('%p',
+                interview.completed.strftime('%p').lower()) }}
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if interview.approved_by_user_name %} {{
+              interview.approved_by_user_name }} {% else %} - {% endif %}
+            </td>
+            <td>
+              {% if interview.approved_on %}
+              <span
+                class="utc-time"
+                data-utc="{{ interview.approved_on.isoformat() }}"
+              >
+                {{ interview.approved_on.strftime('%b %d, %Y at %I:%M
+                %p').replace(' 0', ' ').replace('%p',
+                interview.approved_on.strftime('%p').lower()) }}
+              </span>
+              {% else %} - {% endif %}
+            </td>
+            <td>{% include "interview.status.html" with context %}</td>
+            <td>
+              {% if interview.viewable %}
+              <a
+                href="/interviews/view/{{interview.id}}"
+                class="btn btn-xs btn-primary me-1"
+                title="View Interview"
+              >
+                <i class="fas fa-eye"></i>
+              </a>
+              {% endif %}
+              {% if interview.status.value == 'approved' %}
+              <a
+                href="/docs/{{interview.id}}"
+                class="btn btn-xs btn-secondary"
+                title="View Document"
+              >
+                <i class="fas fa-file-alt"></i>
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
 </div>

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from flask import request, render_template, abort, Response
 
-from auth import get_current_user_id, login_required, decorate_interview_with_username
+from auth import get_current_user_id, login_required, decorate_interview_with_username, decorate_interviews_with_usernames, is_admin
 import sqs
 from shared.data.database import Database
 from shared.data.data_models import InterviewStatus
@@ -21,8 +21,32 @@ def register_routes(app, db: Database):
         # get interviews for this user
         user_id = get_current_user_id()
         logging.info(f"fetching interviews for user {user_id}")
-        interviews = db.get_available_interviews(user_id)
-        return render_template("interviews.html", interviews=interviews)
+        assigned = db.get_available_interviews(user_id)
+
+        # get reviews available to this user
+        reviews = db.get_available_reviews(user_id)
+        reviews = decorate_interviews_with_usernames(reviews)
+
+        # Initialize all as an empty list by default
+        all = []
+
+        # if the user's an admin, fetch all interviews
+        if is_admin():
+            all = db.list_interviews(100)
+            all = decorate_interviews_with_usernames(all)
+
+            # whether or not an interview is "viewable"
+            for interview in all:
+                interview.viewable = False
+                if (interview.status == InterviewStatus.NOT_STARTED or
+                        interview.status == InterviewStatus.STARTED) == False:
+                    interview.viewable = True
+
+        return render_template("interviews.html",
+                               assigned=assigned,
+                               reviews=reviews,
+                               all=all,
+                               )
 
     @app.route("/interviews/view/<id>")
     @login_required

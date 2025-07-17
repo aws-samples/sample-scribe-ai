@@ -37,13 +37,13 @@ def process(db: Database, interview_id: str):
     )
 
     # Get the S3 key for the document
-    key = s3.get_interview_document_key(interview.topic_name, interview.id)
+    doc_key = s3.get_interview_document_key(interview.topic_name, interview.id)
 
     try:
         # Upload PDF to S3
-        logging.info(f"writing to s3: {key}")
+        logging.info(f"writing to s3: {doc_key}")
         pdf_uri = s3.write_to_s3(
-            key=key,
+            key=doc_key,
             data=pdf_bytes,
             content_type='application/pdf',
         )
@@ -57,16 +57,32 @@ def process(db: Database, interview_id: str):
         }
 
         # Write metadata file for KB filtering
-        key = key + ".metadata.json"
-        logging.info(f"writing to s3: {key}")
+        metadata_key = doc_key + ".metadata.json"
+        logging.info(f"writing metadata to s3: {metadata_key}")
         s3.write_to_s3(
-            key=key,
+            key=metadata_key,
             data=json.dumps(metadata),
             content_type='application/json'
         )
 
     except Exception as e:
         logging.error(f"Error handling PDF upload: {str(e)}")
+        raise e
+
+    try:
+        # now archive any existing interviews for this topic
+        objects_to_archive = s3.list_objects(
+            s3.get_topic_document_key(interview.topic_name))
+        for obj in objects_to_archive:
+            key = obj["Key"]
+            # don't touch the one we just created
+            if key != doc_key and key != metadata_key:
+                archived_key = s3.get_archive_key(key)
+                logging.info(f"archiving {key} to {archived_key}")
+                s3.move_object(key, archived_key)
+
+    except Exception as e:
+        logging.error(f"Error handling document archival: {str(e)}")
         raise e
 
     # 3. Update interview status

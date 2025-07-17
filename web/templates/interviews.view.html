@@ -6,9 +6,8 @@
 <div class="container">
   <div class="row">
     <div class="col-12">
-      <div class="d-flex justify-content-between align-items-center mb-4">
+      <div class="mb-4">
         <h4>Interview Details</span></h4>
-        <a href="/reviews" class="btn btn-outline-primary">Back to Reviews</a>
       </div>
 
       <div class="card mb-4">
@@ -20,7 +19,7 @@
               <p class="mb-0"><strong>Date:</strong> <span class="utc-time" data-utc="{{ interview.completed.isoformat() }}">{{ interview.completed.strftime('%m/%d/%y') }} at {{ interview.completed.strftime('%I:%M %p').lower() }}</span></p>
             </div>
             <div>
-              <strong>Status:</strong> 
+              <strong>Status:</strong>
               {% if interview.status.value == 'rejected' %}
                 <span class="badge bg-danger">{{ interview.status.value }}</span>
               {% elif interview.status.value == 'approved' %}
@@ -106,11 +105,11 @@
           {% endif %}
         </div>
       </div>
-
+      {% if interview.status.value == 'approved' %}
       <div class="d-flex justify-content-between">
-        <a href="/reviews" class="btn btn-primary">Back to Reviews</a>
         <a href="/docs/{{interview.id}}" class="btn btn-secondary">View Document</a>
       </div>
+      {%endif%}
     </div>
   </div>
 </div>

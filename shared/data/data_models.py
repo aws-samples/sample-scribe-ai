@@ -42,6 +42,8 @@ class InterviewRecord:
         topic_description=None,
         topic_areas=None,
         scope_name=None,
+        approved_by_user_id=None,
+        approved_on=None,
     ):
         """
         Initialize an InterviewRecord object that maps to the interview database table.
@@ -71,6 +73,8 @@ class InterviewRecord:
         self.topic_description = topic_description
         self.topic_areas = topic_areas
         self.scope_name = scope_name
+        self.approved_by_user_id = approved_by_user_id
+        self.approved_on = approved_on
 
     def to_interview(self) -> 'Interview':
         """Convert database record to domain object"""
@@ -88,6 +92,8 @@ class InterviewRecord:
             topic_description=self.topic_description,
             scope_name=self.scope_name,
             topic_areas=self.topic_areas,
+            approved_by_user_id=self.approved_by_user_id,
+            approved_on=self.approved_on,
         )
 
         # convert status string to enum
@@ -124,6 +130,8 @@ class Interview():
         topic_areas=None,
         scope_name=None,
         user_name=None,
+        approved_by_user_id=None,
+        approved_on=None,
     ):
         logging.info(f"creating interview domain object: {id}")
 
@@ -140,6 +148,8 @@ class Interview():
         self.scope_name = scope_name
         self.questions = []
         self.user_name = user_name
+        self.approved_by_user_id = approved_by_user_id
+        self.approved_on = approved_on
 
     @staticmethod
     def new(topic_id, user_id):
@@ -171,6 +181,8 @@ class Interview():
             topic_description=self.topic_description,
             scope_name=self.scope_name,
             topic_areas=self.topic_areas,
+            approved_by_user_id=self.approved_by_user_id,
+            approved_on=self.approved_on,
         )
 
         # serialize the enum to a string
