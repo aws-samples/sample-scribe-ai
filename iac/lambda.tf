@@ -55,9 +55,11 @@ resource "aws_lambda_function" "message_processor" {
       POSTGRES_HOST         = module.aurora_postgres.cluster_endpoint
       POSTGRES_DB           = local.database_name
       DB_SECRET_ARN         = local.aurora_secret_arn,
-      SCRIBE_SUMMARY_ID     = awscc_bedrock_prompt.scribe_summary.id,
-      DOCUMENT_GENERATOR_ID = awscc_bedrock_prompt.document_generator.id,
+      SCRIBE_SUMMARY_ID     = awscc_bedrock_prompt.interview_summary.id,
+      DOCUMENT_GENERATOR_ID = awscc_bedrock_prompt.interview_pdfgen.id,
       S3_BUCKET_NAME        = aws_s3_bucket.main.id,
+      KNOWLEDGE_BASE_ID     = aws_bedrockagent_knowledge_base.main.id,
+      DATA_SOURCE_ID        = aws_bedrockagent_data_source.main.data_source_id,
     }
   }
 
@@ -182,6 +184,11 @@ resource "aws_iam_policy" "lambda_policy" {
           aws_s3_bucket.main.arn,
           "${aws_s3_bucket.main.arn}/*"
         ]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["bedrock:StartIngestionJob"]
+        Resource = [aws_bedrockagent_knowledge_base.main.arn]
       },
     ]
   })

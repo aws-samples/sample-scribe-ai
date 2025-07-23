@@ -9,9 +9,10 @@ locals {
   bedrock_arn_root = "arn:aws:bedrock:${local.region}:${local.account_id}"
 }
 
-resource "awscc_bedrock_prompt" "scribe_summary" {
-  name        = "${var.name}-ScribeSummary"
-  description = "Prompt used to generate an interview summary for reviewing"
+resource "awscc_bedrock_prompt" "interview_summary" {
+  name            = "${var.name}_interview_summary"
+  description     = "Prompt used to generate an interview summary for reviewing"
+  default_variant = "variant"
 
   variants = [
     {
@@ -43,42 +44,10 @@ resource "awscc_bedrock_prompt" "scribe_summary" {
   ]
 }
 
-resource "awscc_bedrock_prompt" "kb_generator" {
-  name        = "${var.name}-KBGenerator"
-  description = "[NOT CURRENTLY USED] Prompt used to generate a doc for the KB"
-
-  variants = [
-    {
-      name          = "variant"
-      template_type = "TEXT"
-      model_id      = local.model_id_haiku_3_5
-      inference_configuration = {
-        text = {
-          temperature = 1
-        }
-      }
-      template_configuration = {
-        text = {
-          input_variables = [
-            {
-              name = "topic"
-              type = "string"
-            },
-            {
-              name = "interview"
-              type = "string"
-            }
-          ]
-          text = file("${path.module}/../shared/prompts/interview_kb.md")
-        }
-      }
-    }
-  ]
-}
-
-resource "awscc_bedrock_prompt" "document_generator" {
-  name        = "${var.name}-DocumentGenerator"
-  description = "Prompt used to generate a PDF from an interview"
+resource "awscc_bedrock_prompt" "interview_pdfgen" {
+  name            = "${var.name}_interview_pdfgen"
+  description     = "Prompt used to generate a PDF from an interview"
+  default_variant = "variant"
 
   variants = [
     {
@@ -110,8 +79,9 @@ resource "awscc_bedrock_prompt" "document_generator" {
 }
 
 resource "awscc_bedrock_prompt" "interview_user" {
-  name        = "${var.name}-ScribeInterviewUser"
-  description = "User prompt used to start an interview"
+  name            = "${var.name}_interview_user"
+  description     = "User prompt used to start an interview"
+  default_variant = "variant"
 
   variants = [
     {
@@ -135,7 +105,7 @@ resource "awscc_bedrock_prompt" "interview_user" {
               type = "string"
             }
           ]
-          text = file("${path.module}/../shared/prompts/user_interview.md")
+          text = file("${path.module}/../shared/prompts/interview_user.md")
         }
       }
     }
@@ -143,8 +113,9 @@ resource "awscc_bedrock_prompt" "interview_user" {
 }
 
 resource "awscc_bedrock_prompt" "interview_system" {
-  name        = "${var.name}-ScribeInterviewSystem"
-  description = "System prompt used for interview"
+  name            = "${var.name}_interview_system"
+  description     = "System prompt used for interview"
+  default_variant = "variant"
 
   variants = [
     {
@@ -158,7 +129,7 @@ resource "awscc_bedrock_prompt" "interview_system" {
       }
       template_configuration = {
         text = {
-          text = file("${path.module}/../shared/prompts/system_interview.md")
+          text = file("${path.module}/../shared/prompts/interview_system.md")
         }
       }
     }
@@ -166,8 +137,9 @@ resource "awscc_bedrock_prompt" "interview_system" {
 }
 
 resource "awscc_bedrock_prompt" "chat_system" {
-  name        = "${var.name}-ScribeChatSystem"
-  description = "System prompt used for chatbot"
+  name            = "${var.name}_chat_system"
+  description     = "System prompt used for chatbot"
+  default_variant = "variant"
 
   variants = [
     {
@@ -181,7 +153,7 @@ resource "awscc_bedrock_prompt" "chat_system" {
       }
       template_configuration = {
         text = {
-          text = file("${path.module}/../shared/prompts/system_chat.md")
+          text = file("${path.module}/../shared/prompts/chat_system.md")
         }
       }
     }
@@ -189,8 +161,9 @@ resource "awscc_bedrock_prompt" "chat_system" {
 }
 
 resource "awscc_bedrock_prompt" "chat_user" {
-  name        = "${var.name}-ScribeChatUser"
-  description = "User prompt used for chatbot"
+  name            = "${var.name}_chat_user"
+  description     = "User prompt used for chatbot"
+  default_variant = "variant"
 
   variants = [
     {
@@ -204,7 +177,7 @@ resource "awscc_bedrock_prompt" "chat_user" {
       }
       template_configuration = {
         text = {
-          text = file("${path.module}/../shared/prompts/user_chat.md")
+          text = file("${path.module}/../shared/prompts/chat_user.md")
         }
       }
     }
@@ -212,8 +185,9 @@ resource "awscc_bedrock_prompt" "chat_user" {
 }
 
 resource "awscc_bedrock_prompt" "chat_reword" {
-  name        = "${var.name}-ScribeChatReword"
-  description = "reword prompt used for chatbot"
+  name            = "${var.name}_chat_reword"
+  description     = "reword prompt used for chatbot"
+  default_variant = "variant"
 
   variants = [
     {
@@ -227,7 +201,7 @@ resource "awscc_bedrock_prompt" "chat_reword" {
       }
       template_configuration = {
         text = {
-          text = file("${path.module}/../shared/prompts/reword_chat.md")
+          text = file("${path.module}/../shared/prompts/chat_reword.md")
         }
       }
     }

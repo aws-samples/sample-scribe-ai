@@ -3,13 +3,13 @@
 {% elif interview.status.value == 'started' %}
 <span class="badge bg-primary">Interviewing</span>
 {% elif interview.status.value == 'processing' %}
-<span class="badge bg-warning">Processing</span>
+<span class="badge bg-warning">Processing Interview</span>
 {% elif interview.status.value == 'pendingreview' %}
 <span class="badge bg-info">Pending Review</span>
 {% elif interview.status.value == 'reviewing' %}
 <span class="badge bg-primary">Reviewing</span>
 {% elif interview.status.value == 'pendingapproval' %}
-<span class="badge bg-warning">Pending Approval</span>
+<span class="badge bg-warning">Processing Approval</span>
 {% elif interview.status.value == 'approved' %}
 <span class="badge bg-success">Approved</span>
 {% elif interview.status.value == 'rejected' %}

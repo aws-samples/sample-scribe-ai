@@ -95,17 +95,12 @@ output "user_pool_id" {
 
 output "scribe_summary_id" {
   description = "The id of the created scribe summary"
-  value       = awscc_bedrock_prompt.scribe_summary.id
-}
-
-output "kb_generator_id" {
-  description = "The id of the created knowledge base generator"
-  value       = awscc_bedrock_prompt.kb_generator.id
+  value       = awscc_bedrock_prompt.interview_summary.id
 }
 
 output "document_generator_id" {
   description = "The id of the created knowledge base generator"
-  value       = awscc_bedrock_prompt.document_generator.id
+  value       = awscc_bedrock_prompt.interview_pdfgen.id
 }
 
 output "prompt_interview_user" {
