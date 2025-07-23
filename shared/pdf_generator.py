@@ -222,15 +222,50 @@ def generate_pdf(data=None, output_filename=None):
                     table = Table(table_data, colWidths=col_widths)
 
                     # Default table style
+                    # Convert table data to use Paragraph objects for text wrapping
+                    wrapped_data = []
+                    for i, row in enumerate(table_data):
+                        wrapped_row = []
+                        for cell in row:
+                            if isinstance(cell, str):
+                                # Create paragraph style based on whether it's a header or not
+                                if i == 0:  # Header row
+                                    style = ParagraphStyle(
+                                        'TableHeader',
+                                        fontName='Helvetica-Bold',
+                                        fontSize=12,
+                                        textColor=colors.whitesmoke,
+                                        alignment=1  # CENTER
+                                    )
+                                else:  # Data row
+                                    style = ParagraphStyle(
+                                        'TableCell',
+                                        fontName='Helvetica',
+                                        fontSize=10,
+                                        alignment=1  # CENTER
+                                    )
+                                wrapped_row.append(Paragraph(cell, style))
+                            else:
+                                wrapped_row.append(cell)
+                        wrapped_data.append(wrapped_row)
+
+                    # Create table with wrapped data
+                    table = Table(wrapped_data, colWidths=col_widths)
+
+                    # Default table style
                     table_style = TableStyle([
                         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
                         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                        ('VALIGN', (0,0),(-1,-1), 'MIDDLE'),
                         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                         ('FONTSIZE', (0, 0), (-1, 0), 12),
                         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
                         ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
                         ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                        ('TOPPADDING', (0, 0), (-1, -1), 4),
                     ])
 
                     # Apply custom style if provided

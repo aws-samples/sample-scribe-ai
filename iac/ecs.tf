@@ -139,10 +139,6 @@ module "ecs_service" {
           "value" : aws_s3_bucket.main.id,
         },
         {
-          "name" : "KB_GENERATOR_ID",
-          "value" : awscc_bedrock_prompt.kb_generator.id,
-        },
-        {
           "name" : "PROMPT_INTERVIEW_USER",
           "value" : awscc_bedrock_prompt.interview_user.id,
         },
@@ -164,11 +160,11 @@ module "ecs_service" {
         },
         {
           "name" : "SCRIBE_SUMMARY_ID",
-          "value" : awscc_bedrock_prompt.scribe_summary.id,
+          "value" : awscc_bedrock_prompt.interview_summary.id,
         },
         {
           "name" : "DOCUMENT_GENERATOR_ID",
-          "value" : awscc_bedrock_prompt.document_generator.id,
+          "value" : awscc_bedrock_prompt.interview_pdfgen.id,
         },
         {
           "name" : "FLASK_SECRET_KEY_NAME",

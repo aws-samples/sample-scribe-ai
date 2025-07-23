@@ -1,10 +1,12 @@
 import logging
 import json
+import boto3
 
 from shared.data.database import Database
 from shared.data.data_models import InterviewStatus
 from shared.llm import orchestrator
 from shared import s3
+from shared.config import config
 
 
 def process(db: Database, interview_id: str):
@@ -16,7 +18,7 @@ def process(db: Database, interview_id: str):
     """
     logging.info(f"Processing interview_approved for interview {interview_id}")
 
-    # 1. Check interview status
+    # Check interview status
     logging.info(f"Checking interview status: {interview_id}")
     interview = db.get_interview(interview_id)
     if interview is None:
@@ -27,7 +29,7 @@ def process(db: Database, interview_id: str):
             f"Interview {interview_id} is in {interview.status} status, not in {InterviewStatus.PENDING_APPROVAL} status, skipping")
         return
 
-    # 2. Call LLM to generate PDF
+    # Call LLM to generate PDF
     logging.info(f"Calling LLM to generate PDF for interview {interview_id}")
 
     # generate PDF document for this interview
@@ -85,7 +87,38 @@ def process(db: Database, interview_id: str):
         logging.error(f"Error handling document archival: {str(e)}")
         raise e
 
-    # 3. Update interview status
+    # sync the KB datasource
+    try:
+        logging.info(f"Starting KB ingestion job for interview {interview_id}")
+        bedrock_agent = boto3.client("bedrock-agent")
+        try:
+            # Get the knowledge base ID from config
+            kb_id = config.knowledge_base_id
+            data_source_id = config.data_source_id
+            if not kb_id or not data_source_id:
+                logging.warning(
+                    "Knowledge base ID or data source ID not configured, skipping KB sync")
+                return
+
+            # Start the ingestion job
+            logging.info(
+                f"Starting ingestion job for KB: {kb_id}, data source: {data_source_id}")
+            response = bedrock_agent.start_ingestion_job(
+                knowledgeBaseId=kb_id,
+                dataSourceId=data_source_id
+            )
+            ingestion_job_id = response.get("ingestionJobId", "unknown")
+            logging.info(
+                f"KB ingestion job started successfully: {ingestion_job_id}")
+        except Exception as e:
+            logging.warning(f"Failed to start KB ingestion job: {str(e)}")
+
+    except Exception as e:
+        logging.error(f"Error starting KB ingestion job: {str(e)}")
+        # Don't raise the exception here to allow the interview status update to proceed
+        # This is a non-critical operation that can be retried later if needed
+
+    # Update interview status
     interview.status = InterviewStatus.APPROVED
     logging.info("updating interview in db")
     db.update_interview(interview)

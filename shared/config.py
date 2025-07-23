@@ -22,6 +22,7 @@ class Config:
         self._scribe_summary_id = os.getenv("SCRIBE_SUMMARY_ID")
         self._document_generator_id = os.getenv("DOCUMENT_GENERATOR_ID")
         self._knowledge_base_id = os.getenv("KNOWLEDGE_BASE_ID")
+        self._data_source_id = os.getenv("DATA_SOURCE_ID")
         self._kb_generator_id = os.getenv("KB_GENERATOR_ID")
         self._prompt_interview_user = os.getenv("PROMPT_INTERVIEW_USER")
         self._prompt_interview_system = os.getenv("PROMPT_INTERVIEW_SYSTEM")
@@ -87,6 +88,10 @@ class Config:
     @property
     def knowledge_base_id(self) -> str:
         return self._get_env_var("KNOWLEDGE_BASE_ID", self._knowledge_base_id)
+
+    @property
+    def data_source_id(self) -> str:
+        return self._get_env_var("DATA_SOURCE_ID", self._data_source_id)
 
     @property
     def kb_generator_id(self) -> str:
