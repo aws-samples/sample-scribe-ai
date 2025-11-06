@@ -161,7 +161,7 @@ def register_routes(app, db: Database):
 
         except Exception as e:
             app.logger.error(f"Error in search API: {str(e)}")
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'Failed to start voice session'}), 500
 
     @app.route("/api/scopes", methods=["GET"])
     @login_required
@@ -186,7 +186,7 @@ def register_routes(app, db: Database):
 
         except Exception as e:
             app.logger.error(f"Error in get_scopes API: {str(e)}")
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'An internal error has occurred.'}), 500
 
     @app.route("/api/topics", methods=["GET"])
     @login_required
@@ -233,7 +233,7 @@ def register_routes(app, db: Database):
 
         except Exception as e:
             app.logger.error(f"Error in get_topics API: {str(e)}")
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': 'An internal error has occurred.'}), 500
 
     # Voice Interview API Routes
     @app.route("/api/interviews/<interview_id>/voice/start", methods=["POST"])
