@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS interview (
 	completed TIMESTAMP WITH TIME ZONE,
 	summary VARCHAR,
 	approved_by_user_id VARCHAR,
-	approved_on TIMESTAMP WITH TIME ZONE
+	approved_on TIMESTAMP WITH TIME ZONE,
+	voice_mode BOOLEAN DEFAULT FALSE,
+	voice_session_metadata JSONB DEFAULT '{}'::jsonb
 );
 
 CREATE TABLE IF NOT EXISTS conversation (
@@ -35,3 +37,14 @@ CREATE TABLE IF NOT EXISTS conversation (
 	data JSONB,
 	summary VARCHAR
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Insert initial talk_mode_enabled setting
+INSERT INTO settings (key, value) VALUES ('talk_mode_enabled', 'true')
+ON CONFLICT (key) DO NOTHING;

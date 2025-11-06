@@ -12,74 +12,34 @@ function sql() {
   echo ""
 }
 
-#########################################################
-# scope table
-#########################################################
-sql 'DROP TABLE IF EXISTS scope CASCADE;
-' $ADMIN
+sql "ALTER TABLE interview
+ADD COLUMN IF NOT EXISTS voice_mode BOOLEAN DEFAULT FALSE;
+" $ADMIN
 
-sql 'CREATE TABLE IF NOT EXISTS scope (
-  id UUID PRIMARY KEY,
-	created TIMESTAMP WITH TIME ZONE NOT NULL,
-	name VARCHAR NOT NULL,
-	description VARCHAR
+sql "ALTER TABLE interview
+ADD COLUMN IF NOT EXISTS voice_session_metadata JSONB DEFAULT '{}'::jsonb;
+" $ADMIN
+
+sql "CREATE INDEX IF NOT EXISTS idx_interview_voice_mode ON interview(voice_mode);
+" $ADMIN
+
+sql "CREATE INDEX IF NOT EXISTS idx_interview_voice_session_metadata ON interview USING GIN(voice_session_metadata);
+" $ADMIN
+
+sql "COMMENT ON COLUMN interview.voice_session_metadata IS 'JSON metadata for voice sessions including session IDs, connection status, audio quality metrics, and session timestamps';
+" $ADMIN
+
+sql "CREATE TABLE IF NOT EXISTS settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
-' $ADMIN
-#########################################################
+" $ADMIN
 
-#########################################################
-# topic table
-#########################################################
-sql 'DROP TABLE IF EXISTS topic CASCADE;
-' $ADMIN
+sql "INSERT INTO settings (key, value) VALUES ('talk_mode_enabled', 'true')
+ON CONFLICT (key) DO NOTHING;
+" $ADMIN
 
-sql 'CREATE TABLE IF NOT EXISTS topic (
-  id UUID PRIMARY KEY,
-	created TIMESTAMP WITH TIME ZONE NOT NULL,
-	scope_id UUID REFERENCES scope(id) NOT NULL,
-	name VARCHAR NOT NULL,
-	description VARCHAR,
-	areas JSONB NOT NULL
-);
-' $ADMIN
-#########################################################
-
-#########################################################
-# interview table
-#########################################################
-sql 'DROP TABLE IF EXISTS interview CASCADE;
-' $ADMIN
-
-sql 'CREATE TABLE IF NOT EXISTS interview (
-  id UUID PRIMARY KEY,
-	created TIMESTAMP WITH TIME ZONE NOT NULL,
-	topic_id UUID REFERENCES topic(id) NOT NULL,
-	user_id VARCHAR,
-	status VARCHAR NOT NULL,
-	data JSONB,
-	completed TIMESTAMP WITH TIME ZONE,
-	summary VARCHAR,
-	approved_by_user_id VARCHAR,
-	approved_on TIMESTAMP WITH TIME ZONE
-);
-' $ADMIN
-#########################################################
-
-#########################################################
-# conversation table
-#########################################################
-sql 'DROP TABLE IF EXISTS conversation CASCADE;
-' $ADMIN
-
-sql 'CREATE TABLE IF NOT EXISTS conversation (
-  id UUID PRIMARY KEY,
-	created TIMESTAMP WITH TIME ZONE NOT NULL,
-	scope_id UUID REFERENCES scope(id),
-	user_id VARCHAR NOT NULL,
-	data JSONB,
-	summary VARCHAR
-);
-' $ADMIN
-#########################################################
-
-echo "done"
+sql "COMMENT ON TABLE settings IS 'System-wide configuration settings stored as key-value pairs';
+" $ADMIN

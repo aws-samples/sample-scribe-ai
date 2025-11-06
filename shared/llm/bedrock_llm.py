@@ -7,9 +7,10 @@ from shared import log
 
 config = Config(
     retries=dict(
+        mode="adaptive",
         max_attempts=3,
-        mode='adaptive'
-    )
+    ),
+    read_timeout=180,
 )
 bedrock = boto3.client("bedrock-runtime", config=config)
 
@@ -17,17 +18,21 @@ bedrock = boto3.client("bedrock-runtime", config=config)
 class Model(Enum):
     """Bedrock models"""
     NOVA_PRO_V1 = "us.amazon.nova-pro-v1:0"
+
     CLAUDE_3_5_HAIKU_v1 = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
+    CLAUDE_4_5_HAIKU_v1 = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+
     CLAUDE_3_5_SONNET_V2 = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
     CLAUDE_3_7_SONNET_V1 = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    CLAUDE_4_0_SONNET_V1 = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+    CLAUDE_4_5_SONNET_V1 = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 
 def generate_message(
     messages,
-    model_id=Model.CLAUDE_3_5_HAIKU_v1.value,
+    model_id=Model.CLAUDE_4_5_HAIKU_v1.value,
     max_tokens=4096,
     temperature=0.0,
-    top_p=0.999,
     system_prompt="",
 ):
     """Generates a message using Bedrock"""
@@ -37,7 +42,6 @@ def generate_message(
         model_id,
         max_tokens=max_tokens,
         temperature=temperature,
-        top_p=top_p,
         system_prompt=system_prompt,
     )
 
@@ -54,7 +58,6 @@ def converse(
     model_id,
     max_tokens=4096,
     temperature=0.0,
-    top_p=0.999,
     system_prompt="",
     tool_config=None,
 ):
@@ -68,7 +71,6 @@ def converse(
         "inferenceConfig": {
             "maxTokens": max_tokens,
             "temperature": temperature,
-            "topP": top_p,
         },
     }
     if system_prompt != "":

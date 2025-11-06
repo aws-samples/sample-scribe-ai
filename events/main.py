@@ -13,18 +13,25 @@ def main():
     # get interview_id passed in from cli arg
     test_interview_id = sys.argv[1]
 
+    # event type (complete or approved)
+    event_type = sys.argv[2]
+
     # test_local(test_interview_id)
-    test_local_container(test_interview_id)
+    test_local_container(test_interview_id, event_type)
 
 
-def test_local_container(interview_id):
+def test_local_container(interview_id, event_type):
     """
     Test the Lambda function running in a local container by posting mock SQS events.
     """
 
     logging.info(f"Using test interview ID: {interview_id}")
 
-    post_event_to_container(EventType.INTERVIEW_COMPLETE.value, interview_id)
+    et = EventType.INTERVIEW_COMPLETE
+    if event_type == "approved":
+        et = EventType.INTERVIEW_APPROVED
+
+    post_event_to_container(et.value, interview_id)
 
 
 def post_event_to_container(event_type, interview_id):

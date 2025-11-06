@@ -414,7 +414,7 @@ textarea.form-control {
 }
 
 /* Speech to text button */
-#speech-to-text-btn, #send-message-btn {
+#speech-to-text-btn {
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -695,7 +695,7 @@ textarea.form-control {
 }
 
 /* Speech to text button */
-#speech-to-text-btn, #send-message-btn {
+#speech-to-text-btn {
   border-radius: 50%;
   width: 40px;
   height: 40px;

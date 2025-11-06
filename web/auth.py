@@ -76,6 +76,8 @@ def configure_auth(app):
         user = token['userinfo']
         user["username"] = user["cognito:username"]
         session['user'] = user
+        # Store the access token for AppSync Events
+        session['cognito_access_token'] = token.get('access_token')
         return redirect(url_for('index'))
 
     @app.route('/logout')
@@ -316,7 +318,6 @@ def decorate_interviews_with_usernames(interviews) -> List[Interview]:
     users = get_cognito_users()
 
     for user in users:
-        print(f"evaling {user.id}, {user.username}")
         for interview in interviews:
             # Set interviewer username
             if interview.user_id == user.id:

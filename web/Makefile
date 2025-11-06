@@ -37,37 +37,57 @@ install:
 %:
 	@:
 
-## start: run local project
-.PHONY: start
-start:
-	clear
-	@echo ""
-	git ls-files | grep -v iac | entr -r python main.py
+## voice-install: install Node.js dependencies for voice interface
+.PHONY: voice-install
+voice-install:
+	cd voice-interview-react && npm install
+
+## voice-build: build React.js voice interface component
+.PHONY: voice-build
+voice-build:
+	cd voice-interview-react && npm run build
+
+## voice-build-dev: build React.js voice interface component in development mode
+.PHONY: voice-build-dev
+voice-build-dev:
+	cd voice-interview-react && npm run build:dev
+
+## voice-watch: build React.js voice interface component in watch mode
+.PHONY: voice-watch
+voice-watch:
+	cd voice-interview-react && npm run build:watch
+
+## voice-clean: clean built voice interface files
+.PHONY: voice-clean
+voice-clean:
+	cd voice-interview-react && npm run clean
 
 ## baseimage: build base image
 .PHONY: baseimage
 baseimage:
 	docker build -t ai-chatbot.base:0.1.0 -f Dockerfile.base --platform ${platform} .
 
-## deploy: build and deploy container:
-.PHONY: deploy
-deploy:
-	./deploy.sh ${app} ${platform}
-
-## up: run the app locally using docker compose
-.PHONY: up
-up:
+## web-build: build the web container
+.PHONY: web-build
+web-build: voice-build
 	cd ../; docker build -f ./web/Dockerfile -t scribe-web --platform ${platform} .; \
-	cd web; docker compose up -d && docker compose logs -f
+
+## start-web:
+.PHONY: start-web
+start-web: web-build
+	docker compose up -d
+
+## up: run the app locally using docker compose and show logs
+.PHONY: up
+up: start-web
+	docker compose logs -f
 
 ## down: stop the app
 .PHONY: down
 down:
 	docker compose down
 
-## start-docker: run local project using docker compose
-.PHONY: start-docker
-start-docker:
-	clear
-	@echo ""
-	git ls-files | grep -v iac | entr -r make up
+## deploy: build and deploy container:
+.PHONY: deploy
+deploy:
+	./deploy.sh ${app} ${platform}

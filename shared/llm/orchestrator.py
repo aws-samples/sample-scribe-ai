@@ -3,12 +3,10 @@ import logging
 import boto3
 import datetime
 
+from shared import log, pdf_generator
 from shared.config import config
-from shared import log
-from shared.llm import bedrock_llm
-from shared.llm import bedrock_kb
+from shared.llm import bedrock_llm, bedrock_kb
 from shared.data.data_models import Question
-from shared import pdf_generator
 
 prompts = boto3.client('bedrock-agent')
 
@@ -148,11 +146,11 @@ def generate_interview_summary(questions: list[Question], topic: str) -> str:
 
     return bedrock_llm.generate_message(
         messages,
-        model_id=bedrock_llm.Model.CLAUDE_3_5_SONNET_V2.value,
+        model_id=bedrock_llm.Model.CLAUDE_4_5_SONNET_V1.value,
     )
 
 
-def generate_pdf(topic: str, questions: list[Question]):
+def generate_pdf(topic: str, questions: list[Question], user: str):
     """Generates a PDF document for the interview"""
 
     logging.info("Generating PDF document for interview")
@@ -167,7 +165,9 @@ def generate_pdf(topic: str, questions: list[Question]):
     prompt = get_prompt(config.document_generator_id)
     prompt = prompt.replace("{{topic}}", topic)
     prompt = prompt.replace("{{interview}}", interview)
-    prompt = prompt.replace("{{date}}", datetime.datetime.now().strftime("%b %-d, %Y"))
+    prompt = prompt.replace(
+        "{{date}}", datetime.datetime.now().strftime("%b %-d, %Y"))
+    prompt = prompt.replace("{{interviewee}}", user)
     messages = [user_message(prompt)]
 
     tool_config = {
@@ -189,11 +189,15 @@ def generate_pdf(topic: str, questions: list[Question]):
                             },
                             "author": {
                                 "type": "string",
-                                "description": "Optional author of the document."
+                                "description": "Author of the document."
+                            },
+                            "interviewee": {
+                                "type": "string",
+                                "description": "Based on interview with."
                             },
                             "date": {
                                 "type": "string",
-                                "description": "Optional date of the document creation."
+                                "description": "Date of the document creation."
                             },
                             "sections": {
                                 "type": "array",
@@ -341,10 +345,12 @@ def generate_pdf(topic: str, questions: list[Question]):
         }]
     }
 
-    # invoke the model
+    # invoke the model with increased token limit for complex PDF generation
     response = bedrock_llm.converse(
         messages,
-        model_id=bedrock_llm.Model.CLAUDE_3_5_SONNET_V2.value,
+        # model_id=bedrock_llm.Model.CLAUDE_4_5_SONNET_V1.value,
+        model_id=bedrock_llm.Model.CLAUDE_4_0_SONNET_V1.value,
+        max_tokens=16384,  # Increased from default 4096 for complex technical documentation
         tool_config=tool_config,
     )
 

@@ -8,6 +8,8 @@ from shared.llm import orchestrator
 from shared import s3
 from shared.config import config
 
+cognito_client = boto3.client("cognito-idp")
+
 
 def process(db: Database, interview_id: str):
     """
@@ -29,13 +31,19 @@ def process(db: Database, interview_id: str):
             f"Interview {interview_id} is in {interview.status} status, not in {InterviewStatus.PENDING_APPROVAL} status, skipping")
         return
 
+    # fetch username from cognito
+    logging.info(
+        f"fetching users from cognito to lookup user: {interview.user_id}")
+    username = get_username(interview.user_id)
+
     # Call LLM to generate PDF
     logging.info(f"Calling LLM to generate PDF for interview {interview_id}")
 
     # generate PDF document for this interview
     pdf_bytes = orchestrator.generate_pdf(
         interview.topic_name,
-        interview.questions
+        interview.questions,
+        username,
     )
 
     # Get the S3 key for the document
@@ -47,7 +55,7 @@ def process(db: Database, interview_id: str):
         pdf_uri = s3.write_to_s3(
             key=doc_key,
             data=pdf_bytes,
-            content_type='application/pdf',
+            content_type="application/pdf",
         )
 
         # Create metadata for the pdf
@@ -64,7 +72,7 @@ def process(db: Database, interview_id: str):
         s3.write_to_s3(
             key=metadata_key,
             data=json.dumps(metadata),
-            content_type='application/json'
+            content_type="application/json"
         )
 
     except Exception as e:
@@ -124,3 +132,52 @@ def process(db: Database, interview_id: str):
     db.update_interview(interview)
     logging.info(
         f"Interview {interview_id} processed and status updated to {InterviewStatus.APPROVED}")
+
+
+def get_username(user_id: str) -> str:
+    """
+    Lookup username from Cognito User Pool
+
+    Args:
+        user_id: The user's Cognito sub (unique identifier)
+
+    Returns:
+        str: The username if found, or "Unknown User" if not found
+    """
+    try:
+        # Get all users and find the one with matching user_id
+        pagination_token = None
+
+        while True:
+            if pagination_token:
+                response = cognito_client.list_users(
+                    UserPoolId=config.cognito_pool_id,
+                    AttributesToGet=["sub"],
+                    PaginationToken=pagination_token
+                )
+            else:
+                response = cognito_client.list_users(
+                    UserPoolId=config.cognito_pool_id,
+                    AttributesToGet=["sub"]
+                )
+
+            # Check each user in the current page
+            for user in response["Users"]:
+                user_attrs = {attr["Name"]: attr["Value"]
+                              for attr in user["Attributes"]}
+                if user_attrs.get("sub") == user_id:
+                    return user["Username"]
+
+            # Check if there are more users to fetch
+            pagination_token = response.get("PaginationToken")
+            if not pagination_token:
+                break
+
+        # User not found
+        logging.warning(f"User with ID {user_id} not found in Cognito")
+        return "Unknown User"
+
+    except Exception as e:
+        logging.error(
+            f"Error fetching username from Cognito for user_id {user_id}: {str(e)}")
+        return "Unknown User"

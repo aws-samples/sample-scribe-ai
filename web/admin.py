@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timezone
 from flask import request, render_template, current_app, current_app
 from shared.data import database
-from auth import login_required, admin_required, get_cognito_users, decorate_interviews_with_usernames
+from auth import login_required, admin_required, get_cognito_users, decorate_interviews_with_usernames, get_current_user_id, get_current_user
 from typing import List, Dict, Optional
 from botocore.exceptions import ClientError
 from shared.data.data_models import Interview, InterviewStatus
@@ -173,7 +173,8 @@ def register_routes(app, db: database.Database):
             if user_id:
                 # create a new interview for the user
                 # if there's not an existing one in-flight
-                interview = db.get_inflight_interview_by_user_topic(user_id, id)
+                interview = db.get_inflight_interview_by_user_topic(
+                    user_id, id)
                 if interview is None:
                     interview = Interview.new(id, user_id)
                     db.create_interview(interview)
@@ -231,13 +232,82 @@ def register_routes(app, db: database.Database):
 
         return render_template("admin.topics.html", scope=scope, topics=topics)
 
+    @app.route("/admin/settings/talk-mode", methods=["POST"])
+    @login_required
+    @admin_required
+    def toggle_talk_mode():
+        """Toggle talk mode setting via HTMX"""
+        try:
+            # Get current user information for audit logging
+            user_id = get_current_user_id()
+            user_info = get_current_user()
+            user_email = user_info.get(
+                'email', 'unknown') if user_info else 'unknown'
+
+            # Get current setting
+            current_enabled = db.get_talk_mode_enabled()
+            # Toggle the setting
+            new_enabled = not current_enabled
+            db.set_setting('talk_mode_enabled',
+                           'true' if new_enabled else 'false')
+
+            # Audit log the settings change
+            logging.info({
+                "event": "settings_change",
+                "setting_key": "talk_mode_enabled",
+                "old_value": current_enabled,
+                "new_value": new_enabled,
+                "user_id": user_id,
+                "user_email": user_email,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "action": "toggle_talk_mode"
+            })
+
+            # Return success message with updated status
+            status_text = "enabled" if new_enabled else "disabled"
+            return f'<span class="text-success">✓ Successfully {status_text}</span>'
+
+        except Exception as e:
+            logging.error(f"Error toggling talk mode: {e}")
+            # Return user-friendly error message
+            return '<span class="text-danger">✗ Failed to update talk mode setting. Please try again or contact support if the problem persists.</span>', 500
+
+    @app.route("/admin/settings/talk-mode/status")
+    @login_required
+    @admin_required
+    def get_talk_mode_status():
+        """Get current talk mode status for admin UI"""
+        try:
+            enabled = db.get_talk_mode_enabled()
+            status_text = "enabled" if enabled else "disabled"
+            return f'Talk Mode is currently {status_text}'
+        except Exception as e:
+            logging.error(f"Error retrieving talk mode status: {e}")
+            # Return user-friendly error message
+            return '<span class="text-danger">✗ Unable to retrieve talk mode status. Please refresh the page.</span>', 500
+
     @app.route("/admin")
     @login_required
     @admin_required
     def admin():
         """admin home page"""
 
-        # fetch scopes from db
-        scopes = db.list_scopes()
+        try:
+            # fetch scopes from db
+            scopes = db.list_scopes()
 
-        return render_template("admin.html", scopes=scopes)
+            # fetch talk mode setting for template with graceful degradation
+            try:
+                talk_mode_enabled = db.get_talk_mode_enabled()
+            except Exception as e:
+                logging.error(f"Error retrieving talk mode setting: {e}")
+                # Default to enabled for backward compatibility
+                talk_mode_enabled = True
+
+            return render_template("admin.html", scopes=scopes, talk_mode_enabled=talk_mode_enabled)
+
+        except Exception as e:
+            logging.error(f"Error loading admin page: {e}")
+            # Return error page with user-friendly message
+            return render_template("error.html",
+                                   error_message="Unable to load admin interface. Please try again or contact support if the problem persists."), 500

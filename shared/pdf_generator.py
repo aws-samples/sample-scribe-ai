@@ -130,22 +130,23 @@ def generate_pdf(data=None, output_filename=None):
     # Add title if provided
     if "title" in data:
         elements.append(Paragraph(data["title"], title_style))
-        elements.append(Spacer(1, 0.25*inch))
+        elements.append(Spacer(1, 0.10*inch))
 
     # Add subtitle if provided
     if "subtitle" in data:
         elements.append(Paragraph(data["subtitle"], subtitle_style))
-        elements.append(Spacer(1, 0.25*inch))
+        elements.append(Spacer(1, 0.10*inch))
 
     # Add author and date if provided
-    if "author" in data or "date" in data:
-        author_date = []
-        if "author" in data:
-            author_date.append(f"Author: {data['author']}")
-        if "date" in data:
-            author_date.append(f"Date: {data['date']}")
-
-        elements.append(Paragraph(" | ".join(author_date), styles["Italic"]))
+    if "author" in data:
+        elements.append(
+            Paragraph(f"Author: {data['author']}", styles["Italic"]))
+    if "interviewee" in data:
+        elements.append(
+            Paragraph(f"Based on interview with: {data['interviewee']}", styles["Italic"]))
+    if "date" in data:
+        elements.append(Paragraph(f"Date: {data['date']}", styles["Italic"]))
+    if "author" in data or "interviewee" in data or "date" in data:
         elements.append(Spacer(1, 0.25*inch))
 
     # Process sections
@@ -156,8 +157,9 @@ def generate_pdf(data=None, output_filename=None):
         if level not in heading_styles:
             level = 1
 
+        elements.append(Spacer(1, 0.1*inch))
         elements.append(Paragraph(heading, heading_styles[level]))
-        elements.append(Spacer(1, 0.15*inch))
+        elements.append(Spacer(1, 0.07*inch))
 
         # Process content elements
         for content in section.get("content", []):
@@ -175,7 +177,51 @@ def generate_pdf(data=None, output_filename=None):
                     )
 
                     if "font_name" in style_props:
-                        custom_style.fontName = style_props["font_name"]
+                        # Validate font name - map common fonts to ReportLab equivalents
+                        font_name = style_props["font_name"]
+
+                        # Map common font names to ReportLab equivalents
+                        font_mapping = {
+                            # Direct ReportLab fonts
+                            'Helvetica': 'Helvetica',
+                            'Helvetica-Bold': 'Helvetica-Bold',
+                            'Helvetica-Oblique': 'Helvetica-Oblique',
+                            'Helvetica-BoldOblique': 'Helvetica-BoldOblique',
+                            'Times-Roman': 'Times-Roman',
+                            'Times-Bold': 'Times-Bold',
+                            'Times-Italic': 'Times-Italic',
+                            'Times-BoldItalic': 'Times-BoldItalic',
+                            'Courier': 'Courier',
+                            'Courier-Bold': 'Courier-Bold',
+                            'Courier-Oblique': 'Courier-Oblique',
+                            'Courier-BoldOblique': 'Courier-BoldOblique',
+
+                            # Common font name mappings
+                            'Arial': 'Helvetica',
+                            'Arial-Bold': 'Helvetica-Bold',
+                            'Arial-Italic': 'Helvetica-Oblique',
+                            'Arial-BoldItalic': 'Helvetica-BoldOblique',
+                            'Times': 'Times-Roman',
+                            'Times New Roman': 'Times-Roman',
+                            'Times-New-Roman': 'Times-Roman',
+                            'TimesNewRoman': 'Times-Roman',
+                            'Courier New': 'Courier',
+                            'CourierNew': 'Courier',
+                            'Monospace': 'Courier',
+                            'Sans-serif': 'Helvetica',
+                            'Serif': 'Times-Roman'
+                        }
+
+                        if font_name in font_mapping:
+                            mapped_font = font_mapping[font_name]
+                            custom_style.fontName = mapped_font
+                            if font_name != mapped_font:
+                                logging.info(
+                                    f"Mapped font '{font_name}' to ReportLab font '{mapped_font}'")
+                        else:
+                            logging.warning(
+                                f"Unknown font name '{font_name}', using default Helvetica")
+                            custom_style.fontName = 'Helvetica'
                     if "font_size" in style_props:
                         custom_style.fontSize = style_props["font_size"]
                     if "alignment" in style_props:
@@ -197,8 +243,14 @@ def generate_pdf(data=None, output_filename=None):
 
                     para_style = custom_style
 
-                elements.append(Paragraph(content["text"], para_style))
-                elements.append(Spacer(1, 0.1*inch))
+                try:
+                    elements.append(Paragraph(content["text"], para_style))
+                    elements.append(Spacer(1, 0.1*inch))
+                except Exception as e:
+                    logging.error(f"Error creating paragraph: {e}")
+                    # Fallback to normal style if custom style fails
+                    elements.append(Paragraph(content["text"], normal_style))
+                    elements.append(Spacer(1, 0.1*inch))
 
             elif content_type == "bullet_list":
                 for item in content.get("items", []):
@@ -257,7 +309,7 @@ def generate_pdf(data=None, output_filename=None):
                         ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
                         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('VALIGN', (0,0),(-1,-1), 'MIDDLE'),
+                        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                         ('FONTSIZE', (0, 0), (-1, 0), 12),
                         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),

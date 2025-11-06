@@ -32,12 +32,21 @@
               </span>
               <a
                 href="#"
-                class="btn btn-primary btn-sm"
+                class="btn btn-primary btn-sm{% if not talk_mode_enabled %} me-0{% else %} me-2{% endif %}"
                 hx-get="/interviews/start/{{interview.id}}"
                 hx-target="#interview"
                 hx-indicator="#loading-indicator-{{interview.id}}"
-                >Start</a
+                ><i class="fas fa-keyboard me-1"></i>Type</a
               >
+              {% if talk_mode_enabled %}
+              <a
+                href="/interviews/voice/{{interview.id}}"
+                class="btn btn-primary btn-sm"
+                title="Start interview in voice mode"
+              >
+                <i class="fas fa-microphone me-1"></i>Talk
+              </a>
+              {% endif %}
             </div>
             {% endif %} {% if interview.status.value == 'started' %}
             <div class="d-flex align-items-center justify-content-end">
@@ -55,11 +64,11 @@
               </span>
               <a
                 href="#"
-                class="btn btn-primary btn-sm"
+                class="btn btn-primary btn-sm me-2"
                 hx-get="/interviews/resume/{{interview.id}}"
                 hx-target="#interview"
                 hx-indicator="#loading-indicator-{{interview.id}}"
-                >Resume</a
+                ><i class="fas fa-keyboard me-1"></i>Resume</a
               >
             </div>
             {% endif %}
@@ -99,8 +108,8 @@
               class="btn btn-primary btn-sm{% if interview.status.value == 'processing' %} disabled{% endif %}"
               hx-get="/review/start/{{interview.id}}"
               hx-target="#interview"
-              >{% if interview.status.value == 'pendingreview' %}Start{% elif
-              interview.status.value == 'reviewing' %}Resume{% elif
+              >{% if interview.status.value == 'pendingreview' %}Review{% elif
+              interview.status.value == 'reviewing' %}Review{% elif
               interview.status.value == 'processing' %}Processing{% endif %}
             </a>
           </div>
@@ -122,11 +131,12 @@
           <tr>
             <th>Scope</th>
             <th>Topic</th>
-            <th>User</th>
+            <th class="text-center">Mode</th>
+            <th>Conducted By</th>
             <th>Completion Date</th>
             <th>Approved By</th>
             <th>Approved Date</th>
-            <th>Status</th>
+            <th class="text-center">Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -135,6 +145,14 @@
           <tr>
             <td>{{ interview.scope_name }}</td>
             <td>{{ interview.topic_name }}</td>
+            <td class="text-center">
+              {% if interview.status.value != 'notstarted' %} {% if
+              interview.voice_mode %}
+              <i class="fas fa-microphone" title="Voice Interview"></i>
+              {% else %}
+              <i class="fas fa-keyboard" title="Text Interview"></i>
+              {% endif %} {% else %} - {% endif %}
+            </td>
             <td>{{ interview.user_name }}</td>
             <td>
               {% if interview.completed %}
@@ -164,7 +182,9 @@
               </span>
               {% else %} - {% endif %}
             </td>
-            <td>{% include "interview.status.html" with context %}</td>
+            <td class="text-center">
+              {% include "interview.status.html" with context %}
+            </td>
             <td>
               {% if interview.viewable %}
               <a
@@ -174,8 +194,7 @@
               >
                 <i class="fas fa-eye"></i>
               </a>
-              {% endif %}
-              {% if interview.status.value == 'approved' %}
+              {% endif %} {% if interview.status.value == 'approved' %}
               <a
                 href="/docs/{{interview.id}}"
                 class="btn btn-xs btn-secondary"
