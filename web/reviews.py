@@ -65,12 +65,12 @@ def register_routes(app, db: Database):
         status = InterviewStatus.PENDING_APPROVAL
         logging.info(f"updating interview status to {status}")
         interview.status = status
-        
+
         # Set approval fields
         from datetime import datetime, timezone
         interview.approved_by_user_id = get_current_user_id()
         interview.approved_on = datetime.now(timezone.utc)
-        
+
         db.update_interview(interview)
 
         # post a msg to sqs to generate summary
@@ -107,7 +107,7 @@ def register_routes(app, db: Database):
             logging.info(f"Successfully updated interview status to rejected")
         except Exception as e:
             logging.error(f"Error updating interview: {str(e)}")
-            response = Response(f"Error: {str(e)}", status=500)
+            response = Response(f"Error: 'An internal error has occurred.'", status=500)
             return response
 
         # redirect to reviews
