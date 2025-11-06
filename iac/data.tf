@@ -1,5 +1,5 @@
 locals {
-  region     = data.aws_region.current.name
+  region     = data.aws_region.current.id
   account_id = data.aws_caller_identity.current.account_id
 }
 
@@ -11,7 +11,7 @@ data "aws_availability_zones" "available" {}
 
 data "aws_rds_engine_version" "postgres" {
   engine  = "aurora-postgresql"
-  version = "15.10"
+  version = "15.12"
 }
 
 # Get ECR authorization token

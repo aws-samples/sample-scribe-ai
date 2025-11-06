@@ -44,6 +44,8 @@ class InterviewRecord:
         scope_name=None,
         approved_by_user_id=None,
         approved_on=None,
+        voice_mode=None,
+        voice_session_metadata=None,
     ):
         """
         Initialize an InterviewRecord object that maps to the interview database table.
@@ -56,7 +58,9 @@ class InterviewRecord:
             status VARCHAR NOT NULL,
             data JSONB NOT NULL, -- [{"question":"", "answer":""}]
             completed TIMESTAMP WITH TIME ZONE NOT NULL,
-            summary VARCHAR NOT NULL
+            summary VARCHAR NOT NULL,
+            voice_mode BOOLEAN DEFAULT FALSE,
+            voice_session_metadata JSONB DEFAULT '{}'::jsonb
         );
         """
         logging.info(f"creating interview record: {id}")
@@ -75,6 +79,8 @@ class InterviewRecord:
         self.scope_name = scope_name
         self.approved_by_user_id = approved_by_user_id
         self.approved_on = approved_on
+        self.voice_mode = voice_mode
+        self.voice_session_metadata = voice_session_metadata
 
     def to_interview(self) -> 'Interview':
         """Convert database record to domain object"""
@@ -94,6 +100,8 @@ class InterviewRecord:
             topic_areas=self.topic_areas,
             approved_by_user_id=self.approved_by_user_id,
             approved_on=self.approved_on,
+            voice_mode=self.voice_mode,
+            voice_session_metadata=self.voice_session_metadata,
         )
 
         # convert status string to enum
@@ -109,6 +117,18 @@ class InterviewRecord:
                     answer=q.get("a", ""),
                 )
                 result.questions.append(question)
+
+        # handle voice_session_metadata deserialization
+        if isinstance(self.voice_session_metadata, str):
+            try:
+                result.voice_session_metadata = json.loads(
+                    self.voice_session_metadata)
+            except (json.JSONDecodeError, TypeError):
+                result.voice_session_metadata = {}
+        elif self.voice_session_metadata is None:
+            result.voice_session_metadata = {}
+        else:
+            result.voice_session_metadata = self.voice_session_metadata
 
         return result
 
@@ -132,6 +152,8 @@ class Interview():
         user_name=None,
         approved_by_user_id=None,
         approved_on=None,
+        voice_mode=None,
+        voice_session_metadata=None,
     ):
         logging.info(f"creating interview domain object: {id}")
 
@@ -150,6 +172,8 @@ class Interview():
         self.user_name = user_name
         self.approved_by_user_id = approved_by_user_id
         self.approved_on = approved_on
+        self.voice_mode = voice_mode if voice_mode is not None else False
+        self.voice_session_metadata = voice_session_metadata if voice_session_metadata is not None else {}
 
     @staticmethod
     def new(topic_id, user_id):
@@ -183,6 +207,8 @@ class Interview():
             topic_areas=self.topic_areas,
             approved_by_user_id=self.approved_by_user_id,
             approved_on=self.approved_on,
+            voice_mode=self.voice_mode,
+            voice_session_metadata=self.voice_session_metadata,
         )
 
         # serialize the enum to a string
@@ -196,6 +222,10 @@ class Interview():
                 q["a"] = question.answer
             data.append(q)
         result.data = json.dumps(data, default=str)
+
+        # serialize voice_session_metadata to JSON string
+        result.voice_session_metadata = json.dumps(
+            self.voice_session_metadata, default=str)
 
         return result
 

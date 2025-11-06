@@ -37,8 +37,8 @@ resource "aws_lambda_function" "message_processor" {
   image_uri    = docker_registry_image.lambda_registry_image.name
 
   architectures = ["arm64"]
-  timeout       = 120
-  memory_size   = 256
+  timeout       = 300
+  memory_size   = 512
   role          = aws_iam_role.lambda_role.arn
 
   # VPC configuration to run in the same VPC as the database
@@ -52,14 +52,15 @@ resource "aws_lambda_function" "message_processor" {
       SQS_QUEUE_URL = aws_sqs_queue.main.url,
 
       # database connection info
-      POSTGRES_HOST         = module.aurora_postgres.cluster_endpoint
-      POSTGRES_DB           = local.database_name
-      DB_SECRET_ARN         = local.aurora_secret_arn,
-      SCRIBE_SUMMARY_ID     = awscc_bedrock_prompt.interview_summary.id,
-      DOCUMENT_GENERATOR_ID = awscc_bedrock_prompt.interview_pdfgen.id,
-      S3_BUCKET_NAME        = aws_s3_bucket.main.id,
-      KNOWLEDGE_BASE_ID     = aws_bedrockagent_knowledge_base.main.id,
-      DATA_SOURCE_ID        = aws_bedrockagent_data_source.main.data_source_id,
+      POSTGRES_HOST            = module.aurora_postgres.cluster_endpoint
+      POSTGRES_DB              = local.database_name
+      DB_SECRET_ARN            = local.aurora_secret_arn,
+      SCRIBE_SUMMARY_ID        = awscc_bedrock_prompt.interview_summary.id,
+      DOCUMENT_GENERATOR_ID    = awscc_bedrock_prompt.interview_pdfgen.id,
+      S3_BUCKET_NAME           = aws_s3_bucket.main.id,
+      KNOWLEDGE_BASE_ID        = aws_bedrockagent_knowledge_base.main.id,
+      DATA_SOURCE_ID           = aws_bedrockagent_data_source.main.data_source_id,
+      AWS_COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
     }
   }
 
@@ -154,20 +155,36 @@ resource "aws_iam_policy" "lambda_policy" {
         Action = ["bedrock:InvokeModel"]
         Resource = [
           "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_3_5}",
+          "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_4_0}",
+          "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_4_5}",
         ]
       },
       {
         Effect = "Allow"
         Action = ["bedrock:InvokeModel"]
         Resource = [
+
+          # sonnet 3.5
           "arn:aws:bedrock:${local.inference_region1}::foundation-model/${local.model_id_sonnet_3_5}",
           "arn:aws:bedrock:${local.inference_region2}::foundation-model/${local.model_id_sonnet_3_5}",
           "arn:aws:bedrock:${local.inference_region3}::foundation-model/${local.model_id_sonnet_3_5}",
+
+          # sonnet 4.0
+          "arn:aws:bedrock:${local.inference_region1}::foundation-model/${local.model_id_sonnet_4_0}",
+          "arn:aws:bedrock:${local.inference_region2}::foundation-model/${local.model_id_sonnet_4_0}",
+          "arn:aws:bedrock:${local.inference_region3}::foundation-model/${local.model_id_sonnet_4_0}",
+
+          # sonnet 4.5
+          "arn:aws:bedrock:${local.inference_region1}::foundation-model/${local.model_id_sonnet_4_5}",
+          "arn:aws:bedrock:${local.inference_region2}::foundation-model/${local.model_id_sonnet_4_5}",
+          "arn:aws:bedrock:${local.inference_region3}::foundation-model/${local.model_id_sonnet_4_5}",
         ]
         Condition = {
           StringLike = {
             "bedrock:InferenceProfileArn" = [
               "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_3_5}",
+              "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_4_0}",
+              "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_4_5}",
             ]
           }
         }
@@ -189,6 +206,11 @@ resource "aws_iam_policy" "lambda_policy" {
         Effect   = "Allow"
         Action   = ["bedrock:StartIngestionJob"]
         Resource = [aws_bedrockagent_knowledge_base.main.arn]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["cognito-idp:ListUsers"]
+        Resource = [aws_cognito_user_pool.main.arn]
       },
     ]
   })

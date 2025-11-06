@@ -143,69 +143,7 @@
       </div>
     </section>
 
-    <script src="/static/js/chrome-speech.js"></script>
-    <script src="/static/js/speech-recognition.js">"></script>
     <script>
-      // Check if the answer field is loaded, if so, initialize speech to text
-      function initSpeechToText() {
-        const speechBtn = document.getElementById('speech-to-text-btn');
-        if (!speechBtn) return;
-
-        const textArea = document.getElementById('speech-text-area');
-        if (!textArea)  return;
-
-        // Init the speech module
-        var speech = new Speech();
-
-        speech.recognition.onresult = function(event) {
-          const speechRecognitionResult = event.results[event.results.length - 1];
-          const isFinal = speechRecognitionResult.isFinal;
-          if( isFinal ) {
-            const speechRecognitionAlternative = speechRecognitionResult[speechRecognitionResult.length - 1];
-            const currentTranscript = speechRecognitionAlternative.transcript;
-            console.log(currentTranscript);
-
-            // Get current cursor position
-            const cursorPos = textArea.selectionStart;
-            const textBefore = textArea.value.substring(0, cursorPos);
-            const textAfter = textArea.value.substring(cursorPos);
-
-            // Update text area with transcribed text at cursor position
-            if (currentTranscript) {
-                textArea.value = textBefore + currentTranscript + textAfter;
-
-                // Update cursor position
-                const newPos = cursorPos + currentTranscript.length;
-                textArea.selectionStart = newPos;
-                textArea.selectionEnd = newPos;
-                textArea.focus();
-            }
-          }
-        }
-
-        speech.recognition.onerror = (event) => {
-            console.error('Speech recognition error', event.error);
-            // If there's an error, reset the UI
-            speechBtn.classList.remove('btn-outline-primary');
-            speechBtn.classList.add('btn-primary');
-            isListening = false;
-        };
-
-        speechBtn.addEventListener('click', function() {
-          isMicOn = speechBtn.classList.contains('btn-outline-primary');
-          if (isMicOn) {
-            speech.stopCapture();
-            speechBtn.classList.remove('btn-outline-primary');
-            speechBtn.classList.add('btn-primary');
-          } else {
-            speech.startCapture();
-            speechBtn.classList.remove('btn-primary');
-            speechBtn.classList.add('btn-outline-primary');
-          }
-        });
-
-      }
-
       document.addEventListener('DOMContentLoaded', function() {
         // Convert all UTC times to local time
         document.querySelectorAll('.utc-time').forEach(function(element) {
@@ -239,8 +177,6 @@
 
       // Also run the conversion when htmx content is loaded
       document.body.addEventListener('htmx:afterSwap', function() {
-        // Initialize the speech to text for Interviews
-        initSpeechToText();
 
         document.querySelectorAll('.utc-time').forEach(function(element) {
           const utcDateStr = element.getAttribute('data-utc');

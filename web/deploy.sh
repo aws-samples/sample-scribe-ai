@@ -18,7 +18,7 @@ IMAGE=${REGISTRY}/${APP}:${VERSION}
 echo ""
 echo "building and pushing image: ${IMAGE}"
 cd ..
-docker build -f ./web/Dockerfile -t ${IMAGE} --platform ${ARCH} --provenance=false .
+docker build -f ./web/Dockerfile.ci -t ${IMAGE} --platform ${ARCH} --provenance=false .
 cd -
 docker push ${IMAGE}
 

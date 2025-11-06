@@ -128,6 +128,11 @@ output "prompt_chat_reword" {
   value       = awscc_bedrock_prompt.chat_reword.id
 }
 
+output "prompt_interview_voice" {
+  description = "Prompt used for voice interviews"
+  value       = awscc_bedrock_prompt.interview_voice.id
+}
+
 output "session_key_secret_name" {
   description = "Name of the Flask secret session key in Secrets Manager"
   value       = "${var.name}-session-key"
@@ -152,4 +157,25 @@ output "lambda_function_arn" {
 output "lambda_ecr_repository_url" {
   description = "URL of the Lambda ECR repository"
   value       = aws_ecr_repository.lambda.repository_url
+}
+
+# Voice infrastructure outputs
+output "voice_lambda_function_arn" {
+  description = "The ARN of the Voice Lambda function"
+  value       = aws_lambda_function.voice_processor.arn
+}
+
+output "voice_lambda_ecr_repository_url" {
+  description = "URL of the Voice Lambda ECR repository"
+  value       = aws_ecr_repository.voice_lambda.repository_url
+}
+
+output "appsync_events_api_id" {
+  description = "The ID of the AppSync Events API"
+  value       = aws_appsync_api.voice_events.api_id
+}
+
+output "appsync_events_endpoint" {
+  description = "The HTTP endpoint of the AppSync Events API"
+  value       = aws_appsync_api.voice_events.dns["HTTP"]
 }

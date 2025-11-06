@@ -7,16 +7,8 @@
       <li class="d-flex mb-4">
         <p></p>
         <div class="card">
-          <div class="card-header d-flex p-3 justify-content-between">
+          <div class="card-header d-flex p-3">
             <p class="fw-bold mb-0">Scribe AI</p>
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-secondary text-to-speech-btn"
-              title="Listen to question"
-              onclick="speakText(this)"
-              data-text="{{question.question|striptags}}">
-              <i class="fas fa-volume-up"></i>
-            </button>
           </div>
           <div class="card-body">
             <p class="mb-0">{{question.question|markdown}}</p>
@@ -25,7 +17,10 @@
       </li>
       {% if question.answer %}
       <li class="d-flex mb-4">
-        <div class="card w-100 user-message" data-question-index="{{loop.index}}">
+        <div
+          class="card w-100 user-message"
+          data-question-index="{{loop.index}}"
+        >
           <div class="card-header d-flex p-3">
             <p class="fw-bold mb-0">You</p>
           </div>
@@ -73,104 +68,41 @@
     <br />
     {% endif %}
 
-    <!-- new question box with speech-to-text and send button -->
+    <!-- new question box without send button -->
     <div class="form-outline">
       <input type="hidden" name="interview_id" value="{{interview.id}}" />
-      <div class="position-relative">
+      <div>
         <textarea
           id="speech-text-area"
           name="answer"
-          class="form-control"
-          rows="4"
+          class="form-control resizable-textarea"
+          rows="8"
           placeholder="Type your response..."
           hx-trigger="keydown[key==='Enter'&&!shiftKey]"
           hx-on:keydown="(event.keyCode===13&&!event.shiftKey)?event.preventDefault():null"
           hx-post="/interview/answer"
           hx-target="#body"
           hx-indicator="#spinner"
+          style="resize: vertical; min-height: 120px"
         ></textarea>
-        <div class="position-absolute" style="bottom: 10px; right: 10px;">
-          <button
-            id="speech-to-text-btn"
-            type="button"
-            class="btn btn-sm btn-primary"
-            title="Speech to Text">
-            <i class="fas fa-microphone"></i>
-          </button>
-          <button
-            id="send-message-btn"
-            type="button"
-            class="btn btn-sm btn-primary"
-            title="Send Message"
-            hx-post="/interview/answer"
-            hx-target="#body"
-            hx-indicator="#spinner"
-            hx-trigger="click">
-            <i class="fas fa-paper-plane"></i>
-          </button>
-        </div>
       </div>
     </div>
-    <!-- End Interview Button -->
+    <!-- Send Button -->
     <div class="d-flex justify-content-end align-items-center mt-4">
-      <span id="end-interview-indicator" class="htmx-indicator me-2">
-        <div class="d-flex align-items-center">
-          <small class="me-1">Processing interview</small>
-          <div class="spinner-border spinner-border-sm spinner-color" role="status"></div>
-        </div>
-      </span>
-      <a
-        href="/interviews"
-        class="btn btn-danger"
-        hx-put="/interview/end"
-        hx-redirect="/interviews"
-        hx-indicator="#end-interview-indicator"
-        >End Interview</a
+      <button
+        id="send-message-btn"
+        type="button"
+        class="btn btn-primary"
+        title="Send Message"
+        hx-post="/interview/answer"
+        hx-target="#body"
+        hx-indicator="#spinner"
+        hx-trigger="click"
       >
+        <i class="fas fa-paper-plane me-1"></i>Send
+      </button>
     </div>
   </div>
   <br />
   {% include "spinner.html" %}
 </form>
-
-<script>
-  // Simple function to speak text using Chrome's speech synthesis
-  function speakText(button) {
-    const text = button.getAttribute('data-text');
-    if (!text) return;
-
-    // Use the Chrome speech helper if available
-    if (window.ChromeSpeech) {
-      window.ChromeSpeech.speak(text, button);
-    } else {
-      // Fallback to basic speech synthesis
-      const utterance = new SpeechSynthesisUtterance(text);
-
-      // Visual feedback
-      const icon = button.querySelector('i');
-      if (icon) {
-        icon.classList.remove('fa-volume-up');
-        icon.classList.add('fa-volume-mute');
-      }
-
-      // Set up event handlers
-      utterance.onend = function() {
-        if (icon) {
-          icon.classList.remove('fa-volume-mute');
-          icon.classList.add('fa-volume-up');
-        }
-      };
-
-      utterance.onerror = function() {
-        if (icon) {
-          icon.classList.remove('fa-volume-mute');
-          icon.classList.add('fa-volume-up');
-        }
-      };
-
-      // Speak the text
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-    }
-  }
-</script>

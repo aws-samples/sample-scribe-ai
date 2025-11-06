@@ -8,15 +8,9 @@ data "aws_secretsmanager_secret" "session_key" {
 
 module "ecs_cluster" {
   source  = "terraform-aws-modules/ecs/aws//modules/cluster"
-  version = "~> 5.6"
+  version = "6.2.2"
 
-  cluster_name = var.name
-
-  fargate_capacity_providers = {
-    FARGATE      = {}
-    FARGATE_SPOT = {}
-  }
-
+  name = var.name
   tags = var.tags
 }
 
@@ -26,9 +20,31 @@ resource "aws_service_discovery_http_namespace" "main" {
   tags        = var.tags
 }
 
+resource "aws_security_group" "ecs_service" {
+  name_prefix = "${var.name}-ecs-service"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = "tcp"
+    description     = "Service port"
+    security_groups = [aws_security_group.vpc_link.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = var.tags
+}
+
 module "ecs_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
-  version = "~> 5.6"
+  version = "6.2.2"
 
   name        = var.name
   cluster_arn = module.ecs_cluster.arn
@@ -58,14 +74,14 @@ module "ecs_service" {
     enabled   = true
     namespace = aws_service_discovery_http_namespace.main.arn
 
-    service = {
+    service = [{
       port_name      = "http"
       discovery_name = var.name
       client_alias = {
         dns_name = var.name
         port     = var.container_port
       }
-    }
+    }]
   }
 
   container_definitions = {
@@ -73,7 +89,7 @@ module "ecs_service" {
 
       image = var.image
 
-      port_mappings = [
+      portMappings = [
         {
           name          = "http",
           protocol      = "tcp",
@@ -159,6 +175,10 @@ module "ecs_service" {
           "value" : awscc_bedrock_prompt.chat_reword.id,
         },
         {
+          "name" : "PROMPT_INTERVIEW_VOICE",
+          "value" : awscc_bedrock_prompt.interview_voice.id,
+        },
+        {
           "name" : "SCRIBE_SUMMARY_ID",
           "value" : awscc_bedrock_prompt.interview_summary.id,
         },
@@ -174,9 +194,17 @@ module "ecs_service" {
           "name" : "SQS_QUEUE_URL",
           "value" : aws_sqs_queue.main.url,
         },
+        {
+          "name" : "VOICE_LAMBDA_FUNCTION_NAME",
+          "value" : "${var.name}-voice",
+        },
+        {
+          "name" : "APPSYNC_EVENTS_ENDPOINT",
+          "value" : aws_appsync_api.voice_events.dns["HTTP"],
+        },
       ]
 
-      readonly_root_filesystem = false
+      readonlyRootFilesystem = false
 
       dependsOn = [
         {
@@ -199,24 +227,7 @@ module "ecs_service" {
   }
 
   subnet_ids = module.vpc.private_subnets
-
-  security_group_rules = {
-    ingress_api_gateway = {
-      type                     = "ingress"
-      from_port                = var.container_port
-      to_port                  = var.container_port
-      protocol                 = "tcp"
-      description              = "Service port"
-      source_security_group_id = aws_security_group.vpc_link.id
-    }
-    egress_all = {
-      type        = "egress"
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
-  }
+  security_group_ids = [aws_security_group.ecs_service.id]
 
   tasks_iam_role_name        = "${var.name}-tasks"
   tasks_iam_role_description = "role for ${var.name}"
@@ -243,22 +254,32 @@ module "ecs_service" {
       actions = ["bedrock:InvokeModel"]
       resources = [
         "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_haiku_3_5}",
+        "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_haiku_4_5}",
         "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_3_5}",
+        "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_sonnet_4_5}",
       ]
     },
     {
       # underlying bedrock access restricted to inference profile
       actions = ["bedrock:InvokeModel"]
       resources = [
+
+        # haiku 3.5
         "arn:aws:bedrock:${local.inference_region1}::foundation-model/${local.model_id_haiku_3_5}",
         "arn:aws:bedrock:${local.inference_region2}::foundation-model/${local.model_id_haiku_3_5}",
         "arn:aws:bedrock:${local.inference_region3}::foundation-model/${local.model_id_haiku_3_5}",
+
+        # haiku 4.5
+        "arn:aws:bedrock:${local.inference_region1}::foundation-model/${local.model_id_haiku_4_5}",
+        "arn:aws:bedrock:${local.inference_region2}::foundation-model/${local.model_id_haiku_4_5}",
+        "arn:aws:bedrock:${local.inference_region3}::foundation-model/${local.model_id_haiku_4_5}",
       ]
       conditions = [{
         test     = "StringLike"
         variable = "bedrock:InferenceProfileArn"
         values = [
           "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_haiku_3_5}",
+          "${local.bedrock_arn_root}:inference-profile/us.${local.model_id_haiku_4_5}",
         ]
       }]
     },
@@ -289,6 +310,15 @@ module "ecs_service" {
       ]
       resources = [
         aws_sqs_queue.main.arn,
+      ]
+    },
+    {
+      # Voice Lambda invocation permissions for Flask app
+      actions = [
+        "lambda:InvokeFunction"
+      ]
+      resources = [
+        "arn:aws:lambda:${local.region}:${local.account_id}:function:${var.name}-voice"
       ]
     },
   ]

@@ -1,0 +1,41 @@
+{
+  "name": "scribe",
+  "description": "This agent helps interact with the scribe ai environment",
+  "prompt": "If the user asks questions about the local postgres database, use the `localdb` tool.  If the users asks questions about the remote postgres database running in AWS, use the AWS CLI RDS API. In order to get the aurora datbase ARN and credentials secret ARN, use your CLI tool to run `terraform output` in the `iac` directory to get these values. The name of the database is `postgres`.",
+  "mcpServers": {
+    "localdb": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "mcp-alchemy==2025.04.16.110003",
+        "--with",
+        "psycopg2-binary",
+        "--refresh-package",
+        "mcp-alchemy",
+        "mcp-alchemy"
+      ],
+      "env": {
+        "DB_URL": "postgresql://postgres:password@localhost:5432/postgres"
+      }
+    }
+  },
+  "tools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "use_aws",
+    "@localdb"
+  ],
+  "toolAliases": {},
+  "allowedTools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "use_aws",
+    "@localdb/*"
+  ],
+  "resources": [],
+  "hooks": {},
+  "toolsSettings": {},
+  "useLegacyMcpJson": false
+}

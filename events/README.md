@@ -48,7 +48,12 @@ make up
 ```
 ```sh
 # run the test script
-export $(cat .env | grep -v '^#' | xargs) && python -u main.py <interview_id>
+export $(cat .env | grep -v '^#' | xargs) && python -u main.py <interview_id> <event_type>
+```
+example
+```sh
+# run the test script
+export $(cat .env | grep -v '^#' | xargs) && python -u main.py ef9cf079-c4e8-46d6-aad8-84d4f2738ec7 approved
 ```
 ```sh
 make down

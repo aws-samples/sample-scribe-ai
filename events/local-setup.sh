@@ -19,6 +19,8 @@ PROMPT_INTERVIEW_SYSTEM=$(terraform output -raw prompt_interview_system 2>/dev/n
 PROMPT_CHAT_SYSTEM=$(terraform output -raw prompt_chat_system 2>/dev/null || echo "")
 PROMPT_CHAT_USER=$(terraform output -raw prompt_chat_user 2>/dev/null || echo "")
 PROMPT_CHAT_REWORD=$(terraform output -raw prompt_chat_reword 2>/dev/null || echo "")
+S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name 2>/dev/null || echo "")
+AWS_COGNITO_USER_POOL_ID=$(terraform output -raw user_pool_id 2>/dev/null || echo "")
 
 # Create .env file
 cd ..
@@ -32,6 +34,12 @@ POSTGRES_PASSWORD=password
 # AWS Configuration
 AWS_REGION="${AWS_REGION}"
 AWS_DEFAULT_REGION="${AWS_REGION}"
+
+# S3 Configuration
+S3_BUCKET_NAME="${S3_BUCKET_NAME}"
+
+# Cognito Configuration
+AWS_COGNITO_USER_POOL_ID="${AWS_COGNITO_USER_POOL_ID}"
 
 # Bedrock Prompt Configuration
 SCRIBE_SUMMARY_ID="${SCRIBE_SUMMARY_ID}"
