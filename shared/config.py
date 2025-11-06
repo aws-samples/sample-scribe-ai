@@ -26,6 +26,7 @@ class Config:
         self._kb_generator_id = os.getenv("KB_GENERATOR_ID")
         self._prompt_interview_user = os.getenv("PROMPT_INTERVIEW_USER")
         self._prompt_interview_system = os.getenv("PROMPT_INTERVIEW_SYSTEM")
+        self._prompt_interview_voice = os.getenv("PROMPT_INTERVIEW_VOICE")
         self._prompt_chat_system = os.getenv("PROMPT_CHAT_SYSTEM")
         self._prompt_chat_user = os.getenv("PROMPT_CHAT_USER")
         self._prompt_chat_reword = os.getenv("PROMPT_CHAT_REWORD")
@@ -37,6 +38,9 @@ class Config:
         self._postgres_password = os.getenv("POSTGRES_PASSWORD")
         self._postgres_secret_arn = os.getenv("DB_SECRET_ARN")
         self._sqs_queue_url = os.getenv("SQS_QUEUE_URL")
+        self._voice_lambda_function_name = os.getenv(
+            "VOICE_LAMBDA_FUNCTION_NAME")
+        self._appsync_events_endpoint = os.getenv("APPSYNC_EVENTS_ENDPOINT")
 
     def _get_env_var(self, name: str, value: Optional[str]) -> str:
         """Helper method to get environment variable value with validation."""
@@ -47,6 +51,10 @@ class Config:
 
     @property
     def region(self) -> str:
+        return self._get_env_var("AWS_REGION", self._region)
+
+    @property
+    def aws_region(self) -> str:
         return self._get_env_var("AWS_REGION", self._region)
 
     @property
@@ -106,6 +114,10 @@ class Config:
         return self._get_env_var("PROMPT_INTERVIEW_SYSTEM", self._prompt_interview_system)
 
     @property
+    def prompt_interview_voice(self) -> str:
+        return self._get_env_var("PROMPT_INTERVIEW_VOICE", self._prompt_interview_voice)
+
+    @property
     def prompt_chat_system(self) -> str:
         return self._get_env_var("PROMPT_CHAT_SYSTEM", self._prompt_chat_system)
 
@@ -128,6 +140,14 @@ class Config:
     @property
     def sqs_queue_url(self) -> str:
         return self._get_env_var("SQS_QUEUE_URL", self._sqs_queue_url)
+
+    @property
+    def voice_lambda_function_name(self) -> str:
+        return self._get_env_var("VOICE_LAMBDA_FUNCTION_NAME", self._voice_lambda_function_name)
+
+    @property
+    def appsync_events_endpoint(self) -> str:
+        return self._get_env_var("APPSYNC_EVENTS_ENDPOINT", self._appsync_events_endpoint)
 
     @property
     def postgres_secret_arn(self) -> str:

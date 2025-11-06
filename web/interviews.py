@@ -10,6 +10,20 @@ from shared.llm import orchestrator
 from shared.events import EventType
 
 
+def _complete_interview(interview, db):
+    """Shared function to complete an interview and trigger summary generation"""
+    status = InterviewStatus.PROCESSING
+    logging.info(f"updating interview status in db to {status}")
+    interview.completed = datetime.now(timezone.utc)
+    interview.status = status
+    db.end_interview(interview)
+
+    # post a msg to sqs to generate summary
+    event_type = EventType.INTERVIEW_COMPLETE.value
+    logging.info(f"posting {event_type} message to SQS")
+    sqs.post_message(event_type, str(interview.id))
+
+
 def register_routes(app, db: Database):
     """Register interview-related routes with the Flask app"""
 
@@ -42,10 +56,20 @@ def register_routes(app, db: Database):
                         interview.status == InterviewStatus.STARTED) == False:
                     interview.viewable = True
 
+        # Query talk mode enabled status from database with graceful degradation
+        try:
+            talk_mode_enabled = db.get_talk_mode_enabled()
+        except Exception as e:
+            logging.error(
+                f"Error retrieving talk mode setting in interviews: {e}")
+            # Default to enabled for backward compatibility
+            talk_mode_enabled = True
+
         return render_template("interviews.html",
                                assigned=assigned,
                                reviews=reviews,
                                all=all,
+                               talk_mode_enabled=talk_mode_enabled,
                                )
 
     @app.route("/interviews/view/<id>")
@@ -98,6 +122,27 @@ def register_routes(app, db: Database):
 
         logging.info("rendering interviews.conversation.body.html")
         return render_template("interviews.conversation.body.html", interview=interview)
+
+    @app.route("/interviews/voice/<id>")
+    @login_required
+    def voice_interview(id):
+        """Start or resume a voice interview"""
+
+        # get interview
+        interview = db.get_interview(id)
+        if not interview:
+            abort(404, "Interview not found")
+
+        # Check if user has access to this interview
+        user_id = get_current_user_id()
+        if interview.user_id != user_id:
+            abort(403, "Access denied to this interview")
+
+        # decorate interview with user name info from cognito
+        decorate_interview_with_username(interview)
+
+        logging.info(f"Rendering voice interview page for interview {id}")
+        return render_template("interviews.voice.html", interview=interview)
 
     @app.route("/interview/answer", methods=["POST"])
     @login_required
@@ -162,16 +207,7 @@ def register_routes(app, db: Database):
         interview = db.get_interview(id)
         logging.info("fetched interview")
 
-        status = InterviewStatus.PROCESSING
-        logging.info(f"updating interview status in db to {status}")
-        interview.completed = datetime.now(timezone.utc)
-        interview.status = status
-        db.end_interview(interview)
-
-        # post a msg to sqs to generate summary
-        event_type = EventType.INTERVIEW_COMPLETE.value
-        logging.info(f"posting {event_type} message to SQS")
-        sqs.post_message(event_type, str(interview.id))
+        _complete_interview(interview, db)
 
         # Create a response with the HX-Redirect header
         response = Response("Resource updated")

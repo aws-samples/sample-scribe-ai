@@ -1,0 +1,208 @@
+{% extends "base.html" %} {% block title %}Voice Interview - {{
+interview.topic_name }}{% endblock %} {% block extra_head %}
+<!-- React and ReactDOM from CDN -->
+<script
+  crossorigin
+  src="https://unpkg.com/react@18/umd/react.production.min.js"
+></script>
+<script
+  crossorigin
+  src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+></script>
+
+<style>
+  .sticky-card {
+    position: sticky;
+    top: 20px;
+  }
+
+  .voice-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    margin: 20px 0;
+    background-color: #f9f9f9;
+  }
+
+  .voice-status {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  .voice-status.connecting {
+    color: #ff9800;
+  }
+
+  .voice-status.active {
+    color: #4caf50;
+  }
+
+  .voice-status.error {
+    color: #f44336;
+  }
+
+  .audio-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .voice-button {
+    padding: 15px 30px;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+  }
+
+  .voice-button.primary {
+    background-color: #2196f3;
+    color: white;
+  }
+
+  .voice-button.primary:hover {
+    background-color: #1976d2;
+  }
+
+  .voice-button.danger {
+    background-color: #f44336;
+    color: white;
+  }
+
+  .voice-button.danger:hover {
+    background-color: #d32f2f;
+  }
+
+  .voice-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .audio-level {
+    width: 200px;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .audio-level-bar {
+    height: 100%;
+    background-color: #4caf50;
+    width: 0%;
+    transition: width 0.1s ease;
+  }
+
+  .error-message {
+    color: #f44336;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+  }
+
+  .fallback-link {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .fallback-link a {
+    color: #2196f3;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .fallback-link a:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid p-0">
+  <!-- Topic Header -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <h4 class="border-bottom pb-2">Interview Topic: {{interview.topic_name}}</h4>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="row">
+    <!-- Left Sidebar - Interview Areas -->
+    <div class="col-md-3 col-sm-12 mb-3">
+      <div class="card sticky-card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Topic Areas</h6>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            {% for area in interview.topic_areas %}
+            <li class="list-group-item">{{area}}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side - Voice Interview Content -->
+    <div class="col-md-9 col-sm-12">
+
+      <!-- React component will be mounted here -->
+      <div
+        id="voice-interview-component"
+        data-interview-id="{{ interview.id }}"
+        style="margin-top: 20px"
+      ></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Voice interview integration with React component
+  const interviewId = "{{ interview.id }}";
+  const statusElement = document.getElementById("voiceStatus");
+  const errorMessage = document.getElementById("errorMessage");
+
+  // Global functions for React component to use
+  window.updateVoiceStatus = function (status, message) {
+    if (statusElement) {
+      statusElement.textContent = message;
+      statusElement.className = `voice-status ${status}`;
+      statusElement.style.display = message ? "block" : "none";
+    }
+  };
+
+  window.showVoiceError = function (message) {
+    if (errorMessage) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = "block";
+    }
+    window.updateVoiceStatus("error", "Error");
+  };
+
+  window.hideVoiceError = function () {
+    if (errorMessage) {
+      errorMessage.style.display = "none";
+    }
+  };
+
+  // Make interview data available globally for React component
+  window.interviewData = {
+    id: "{{ interview.id }}",
+    topicName: "{{ interview.topic_name }}",
+    scopeName: "{{ interview.scope_name }}",
+    description: "{{ interview.topic_description }}",
+  };
+
+</script>
+
+<!-- Load the React voice interface component -->
+<script src="{{ url_for('static', filename='js/voice-interface.js') }}?v={{ range(1000, 9999) | random }}"></script>
+{% endblock %}

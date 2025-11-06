@@ -1,16 +1,26 @@
 import logging
+import json
+import uuid
 from datetime import datetime, timezone
-from flask import request, abort, jsonify
+from flask import request, abort, jsonify, Response, session
+import boto3
+from botocore.exceptions import ClientError
 
 import chatbot
-from auth import login_required
+from auth import login_required, get_current_user_id
 from shared.log import log
-from shared.llm import bedrock_kb
+from shared.llm import bedrock_kb, orchestrator
 from shared.data.database import Database
+from shared.data.data_models import InterviewStatus
+from shared.config import config
+from interviews import _complete_interview
 
 
 def register_routes(app, db: Database):
     """Register API routes with the Flask app"""
+
+    # Initialize AWS Lambda client for voice routes
+    lambda_client = boto3.client('lambda')
 
     @app.route("/api/ask", methods=["POST"])
     @login_required
@@ -224,3 +234,162 @@ def register_routes(app, db: Database):
         except Exception as e:
             app.logger.error(f"Error in get_topics API: {str(e)}")
             return jsonify({'error': str(e)}), 500
+
+    # Voice Interview API Routes
+    @app.route("/api/interviews/<interview_id>/voice/start", methods=["POST"])
+    @login_required
+    def start_voice_interview(interview_id):
+        """Initialize a voice interview session"""
+        try:
+            user_id = get_current_user_id()
+            if not user_id:
+                abort(401, "User not authenticated")
+
+            interview = db.get_interview(interview_id)
+            if not interview:
+                abort(404, "Interview not found")
+
+            if interview.user_id != user_id:
+                abort(403, "Access denied to this interview")
+
+            if interview.status not in [InterviewStatus.NOT_STARTED, InterviewStatus.STARTED]:
+                abort(
+                    400, f"Interview cannot be started in voice mode. Current status: {interview.status.value}")
+
+            session_id = str(uuid.uuid4())
+            voice_session_metadata = {
+                "session_id": session_id,
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "user_id": user_id,
+                "status": "initializing",
+                "voice_id": "matthew",
+            }
+
+            interview.voice_mode = True
+            interview.voice_session_metadata = voice_session_metadata
+
+            if interview.status == InterviewStatus.NOT_STARTED:
+                interview.status = InterviewStatus.STARTED
+
+            db.update_interview(interview)
+
+            topic_areas = f"- {interview.topic_areas[0]}"
+            for area in interview.topic_areas[1:]:
+                topic_areas += f"\n- {area}"
+
+            # Get the voice interview prompt from Bedrock
+            voice_prompt = orchestrator.get_prompt(
+                config.prompt_interview_voice)
+            system_prompt = voice_prompt.replace(
+                "{{topic}}", interview.topic_name)
+            system_prompt = system_prompt.replace("{{areas}}", topic_areas)
+
+            lambda_payload = {
+                "eventType": "session-start",
+                "userId": user_id,
+                "interviewId": interview_id,
+                "sessionId": voice_session_metadata["session_id"],
+                "voiceId": voice_session_metadata["voice_id"],
+                "topicAreas": interview.topic_areas,
+                "systemPrompt": system_prompt,
+            }
+
+            function_name = config.voice_lambda_function_name
+            logging.info(f"Invoking voice Lambda function: {function_name}")
+            response = lambda_client.invoke(
+                FunctionName=function_name,
+                InvocationType='Event',
+                Payload=json.dumps(lambda_payload)
+            )
+
+            logging.info(
+                f"Voice Lambda invoked successfully. Status: {response['StatusCode']}")
+
+            voice_session_metadata['status'] = 'active'
+            interview.voice_session_metadata = voice_session_metadata
+            db.update_interview(interview)
+
+            return jsonify({
+                "session_id": session_id,
+                "interview_id": interview_id,
+                "status": "active",
+                "appsync_channel": f"/nova-sonic-voice/user/{user_id}/{session_id}",
+                "appsync_endpoint": config.appsync_events_endpoint,
+                "message": "Voice session started successfully"
+            })
+
+        except ClientError as e:
+            logging.error(f"AWS error starting voice session: {str(e)}")
+            return jsonify({'error': 'Failed to start voice session', 'details': str(e)}), 500
+        except Exception as e:
+            logging.error(f"Error starting voice session: {str(e)}")
+            return jsonify({'error': 'Failed to start voice session', 'details': str(e)}), 500
+
+    @app.route("/api/interviews/<interview_id>/voice/end", methods=["PUT"])
+    @login_required
+    def end_voice_interview(interview_id):
+        """End a voice interview session and complete the interview"""
+        try:
+            user_id = get_current_user_id()
+            if not user_id:
+                abort(401, "User not authenticated")
+
+            interview = db.get_interview(interview_id)
+            if not interview:
+                abort(404, "Interview not found")
+
+            if interview.user_id != user_id:
+                abort(403, "Access denied to this interview")
+
+            if not interview.voice_mode:
+                abort(400, "Interview is not in voice mode")
+
+            voice_session_metadata = interview.voice_session_metadata or {}
+            session_id = voice_session_metadata.get('session_id')
+
+            if not session_id:
+                abort(400, "No active voice session found")
+
+            voice_session_metadata.update({
+                'status': 'stopped',
+                'stopped_at': datetime.now(timezone.utc).isoformat()
+            })
+            interview.voice_session_metadata = voice_session_metadata
+            db.update_interview(interview)
+
+            _complete_interview(interview, db)
+
+            return jsonify({
+                'session_id': session_id,
+                'interview_id': interview_id,
+                'status': 'completed',
+                'message': 'Voice interview ended successfully'
+            })
+
+        except ClientError as e:
+            logging.error(f"AWS error ending voice interview: {str(e)}")
+            return jsonify({'error': 'Failed to end voice interview', 'details': str(e)}), 500
+        except Exception as e:
+            logging.error(f"Error ending voice interview: {str(e)}")
+            return jsonify({'error': 'Failed to end voice interview', 'details': str(e)}), 500
+
+    @app.route("/api/cognito-token", methods=["GET"])
+    @login_required
+    def get_cognito_token():
+        """Get AWS Cognito access token for AppSync Events authentication"""
+        try:
+            access_token = session.get('cognito_access_token')
+
+            if not access_token:
+                return jsonify({
+                    'error': 'No Cognito access token available',
+                    'message': 'Please re-authenticate'
+                }), 401
+
+            return jsonify({
+                'accessToken': access_token
+            })
+
+        except Exception as e:
+            logging.error(f"Error getting Cognito token: {str(e)}")
+            return jsonify({'error': 'Failed to get authentication token'}), 500

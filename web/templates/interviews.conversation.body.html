@@ -5,12 +5,25 @@
       position: sticky;
       top: 20px;
     }
+
+    .resizable-textarea {
+      resize: vertical;
+      min-height: 120px;
+      max-height: 400px;
+    }
+
+    .resizable-textarea:focus {
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+      border-color: #80bdff;
+    }
   </style>
 
   <!-- Topic Header -->
   <div class="row mb-3">
     <div class="col-12">
-      <h4 class="border-bottom pb-2">Interview Topic: {{interview.topic_name}}</h4>
+      <h4 class="border-bottom pb-2">
+        Interview Topic: {{interview.topic_name}}
+      </h4>
     </div>
   </div>
 
@@ -28,6 +41,30 @@
             <li class="list-group-item">{{area}}</li>
             {% endfor %}
           </ul>
+        </div>
+        <div class="card-footer bg-light py-2">
+          <!-- End Interview Button -->
+          <div class="d-flex align-items-center">
+            <a
+              href="/interviews"
+              class="btn btn-danger btn-sm text-nowrap"
+              hx-put="/interview/end"
+              hx-vals='{"interview_id": "{{interview.id}}"}'
+              hx-redirect="/interviews"
+              hx-indicator="#end-interview-indicator"
+              hx-confirm="Are you sure you want to end the interview?"
+              >End Interview</a
+            >
+            <span id="end-interview-indicator" class="htmx-indicator ms-2">
+              <div class="d-flex align-items-center">
+                <small class="me-1">Processing interview</small>
+                <div
+                  class="spinner-border spinner-border-sm spinner-color"
+                  role="status"
+                ></div>
+              </div>
+            </span>
+          </div>
         </div>
       </div>
     </div>

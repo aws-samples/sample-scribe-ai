@@ -6,6 +6,7 @@ import time
 import threading
 import psycopg
 import boto3
+from datetime import datetime, timezone
 from opentelemetry.instrumentation.psycopg import PsycopgInstrumentor
 
 from shared.config import config
@@ -151,7 +152,9 @@ class Database():
                 t.areas AS topic_areas,
                 s.name AS scope_name,
                 i.approved_by_user_id,
-                i.approved_on
+                i.approved_on,
+                i.voice_mode,
+                i.voice_session_metadata
             FROM interview i
             JOIN topic t ON i.topic_id = t.id
             JOIN scope s ON t.scope_id = s.id
@@ -181,6 +184,8 @@ class Database():
                 scope_name=record[11],
                 approved_by_user_id=record[12],
                 approved_on=record[13],
+                voice_mode=record[14],
+                voice_session_metadata=record[15],
             )
             results.append(r.to_interview())
         return results
@@ -477,7 +482,7 @@ class Database():
             SELECT i.id, i.created, i.topic_id, i.user_id, i.status,
                    i.data, i.completed, i.summary, t.name as topic_name,
                    t.description as topic_description, t.areas as topic_areas,
-                   s.name as scope_name
+                   s.name as scope_name, i.voice_mode, i.voice_session_metadata
             FROM interview i
             JOIN topic t ON i.topic_id = t.id
             JOIN scope s ON t.scope_id = s.id
@@ -505,6 +510,8 @@ class Database():
                 topic_description=record[9],
                 topic_areas=record[10],
                 scope_name=record[11],
+                voice_mode=record[12],
+                voice_session_metadata=record[13],
             )
             results.append(interview_record.to_interview())
         return results
@@ -649,16 +656,224 @@ class Database():
                 data = %s,
                 summary=%s,
                 approved_by_user_id = %s,
-                approved_on = %s
+                approved_on = %s,
+                voice_mode = %s,
+                voice_session_metadata = %s
             WHERE id = %s
         """
         record = interview.to_record()
-        values = (record.status, record.data, record.summary, record.approved_by_user_id, record.approved_on, record.id)
+        values = (record.status, record.data, record.summary,
+                  record.approved_by_user_id, record.approved_on, record.voice_mode, record.voice_session_metadata, record.id)
         logging.info(f"query: {query}")
         logging.info(f"values: {values}")
 
         with self.connect() as conn:
             conn.execute(query, values)
+
+    def update_interview_transcription(self, interview_id, transcription_data):
+        """Updates interview transcription data for voice interviews"""
+
+        query = """
+            UPDATE interview
+            SET data = %s
+            WHERE id = %s
+        """
+        values = (json.dumps(transcription_data, default=str), interview_id)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def append_voice_transcription_entry(self, interview_id, question, answer):
+        """Appends a new transcription entry to existing interview data"""
+
+        query = """
+            UPDATE interview
+            SET data = COALESCE(data, '[]'::jsonb) || %s::jsonb
+            WHERE id = %s
+        """
+        new_entry = json.dumps([{"q": question, "a": answer}])
+        values = (new_entry, interview_id)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def get_voice_conversation_history(self, interview_id, max_characters=40960):
+        """Gets formatted conversation history for voice sessions with character limit"""
+
+        query = """
+            SELECT data
+            FROM interview
+            WHERE id = %s
+        """
+        values = (interview_id,)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            record = conn.execute(query, values).fetchone()
+
+        if not record or not record[0]:
+            return []
+
+        conversation_data = record[0]
+        if not isinstance(conversation_data, list):
+            return []
+
+        # Format and truncate conversation history for Nova Sonic
+        total_characters = 0
+        formatted_history = []
+
+        # Process from most recent backwards to stay within character limit
+        for i in range(len(conversation_data) - 1, -1, -1):
+            entry = conversation_data[i]
+            question = entry.get('q', '')
+            answer = entry.get('a', '')
+
+            # Truncate individual messages to 1024 characters as per requirements
+            truncated_question = question[:1024] if len(
+                question) > 1024 else question
+            truncated_answer = answer[:1024] if len(answer) > 1024 else answer
+
+            entry_length = len(truncated_question) + len(truncated_answer)
+
+            if total_characters + entry_length > max_characters:
+                break
+
+            formatted_history.insert(0, {
+                'q': truncated_question,
+                'a': truncated_answer
+            })
+
+            total_characters += entry_length
+
+        return formatted_history
+
+    def update_voice_session_metadata(self, interview_id, metadata):
+        """Updates voice session metadata for an interview"""
+
+        query = """
+            UPDATE interview
+            SET voice_session_metadata = %s
+            WHERE id = %s
+        """
+        values = (json.dumps(metadata, default=str), interview_id)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def update_voice_session_status(self, interview_id, session_id, status):
+        """Updates voice session status for a specific session"""
+
+        query = """
+            UPDATE interview
+            SET voice_session_metadata = jsonb_set(
+                COALESCE(voice_session_metadata, '{}'::jsonb),
+                %s,
+                %s::jsonb
+            )
+            WHERE id = %s
+        """
+        path = f'{{{session_id},status}}'
+        status_data = json.dumps(status)
+        values = (path, status_data, interview_id)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def initialize_voice_session(self, interview_id, session_id, metadata):
+        """Initializes voice session metadata for an interview"""
+
+        query = """
+            UPDATE interview
+            SET voice_session_metadata = COALESCE(voice_session_metadata, '{}'::jsonb) || %s::jsonb
+            WHERE id = %s
+        """
+        session_data = {
+            session_id: {
+                **metadata,
+                'createdAt': datetime.now(timezone.utc).isoformat()
+            }
+        }
+        values = (json.dumps(session_data, default=str), interview_id)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def get_voice_session_metadata(self, interview_id, session_id=None):
+        """Gets voice session metadata for an interview"""
+
+        query = """
+            SELECT voice_session_metadata
+            FROM interview
+            WHERE id = %s
+        """
+        values = (interview_id,)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            record = conn.execute(query, values).fetchone()
+
+        if not record:
+            return None
+
+        metadata = record[0] or {}
+
+        if session_id:
+            return metadata.get(session_id)
+
+        return metadata
+
+    def enable_voice_mode(self, interview_id):
+        """Enables voice mode for an interview"""
+
+        query = """
+            UPDATE interview
+            SET voice_mode = true
+            WHERE id = %s
+        """
+        values = (interview_id,)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            conn.execute(query, values)
+
+    def get_interview_voice_info(self, interview_id):
+        """Gets basic interview info for voice session validation"""
+
+        query = """
+            SELECT id, user_id, topic_id, status, voice_mode
+            FROM interview
+            WHERE id = %s
+        """
+        values = (interview_id,)
+        logging.info(f"query: {query}")
+        logging.info(f"values: {values}")
+
+        with self.connect() as conn:
+            record = conn.execute(query, values).fetchone()
+
+        if not record:
+            return None
+
+        return {
+            'id': record[0],
+            'user_id': record[1],
+            'topic_id': record[2],
+            'status': record[3],
+            'voice_mode': record[4] or False
+        }
 
     def get_interview(self, id) -> Interview:
         """fetch an interview by id with all fields and topic information"""
@@ -678,7 +893,9 @@ class Database():
                 t.areas AS topic_areas,
                 s.name AS scope_name,
                 i.approved_by_user_id,
-                i.approved_on
+                i.approved_on,
+                i.voice_mode,
+                i.voice_session_metadata
             FROM interview i
             JOIN topic t ON i.topic_id = t.id
             JOIN scope s ON t.scope_id = s.id
@@ -707,6 +924,8 @@ class Database():
                 scope_name=record[11],
                 approved_by_user_id=record[12],
                 approved_on=record[13],
+                voice_mode=record[14],
+                voice_session_metadata=record[15],
             )
             return record.to_interview()
         else:
@@ -726,7 +945,9 @@ class Database():
                 completed,
                 summary,
                 approved_by_user_id,
-                approved_on
+                approved_on,
+                voice_mode,
+                voice_session_metadata
             FROM interview
             WHERE topic_id = %s
             AND status = %s
@@ -752,6 +973,8 @@ class Database():
                 summary=record[7],
                 approved_by_user_id=record[8],
                 approved_on=record[9],
+                voice_mode=record[10],
+                voice_session_metadata=record[11],
             )
             return record.to_interview()
         else:
@@ -771,7 +994,9 @@ class Database():
                 i.completed,
                 i.summary,
                 i.approved_by_user_id,
-                i.approved_on
+                i.approved_on,
+                i.voice_mode,
+                i.voice_session_metadata
             FROM interview i
             WHERE i.user_id = %s AND i.topic_id = %s
             AND i.status not in (%s,%s)
@@ -801,6 +1026,8 @@ class Database():
                 summary=record[7],
                 approved_by_user_id=record[8],
                 approved_on=record[9],
+                voice_mode=record[10],
+                voice_session_metadata=record[11],
             )
             return record.to_interview()
         else:
@@ -812,12 +1039,12 @@ class Database():
         logging.info(f"db.create_interview()")
 
         query = """
-            INSERT INTO interview (id, created, topic_id, user_id, status, data, summary, completed)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO interview (id, created, topic_id, user_id, status, data, summary, completed, voice_mode, voice_session_metadata)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         record = interview.to_record()
         values = (record.id, record.created, record.topic_id, record.user_id,
-                  record.status, record.data, record.summary, record.completed)
+                  record.status, record.data, record.summary, record.completed, record.voice_mode, record.voice_session_metadata)
         logging.info(f"query: {query}")
         logging.info(f"values: {values}")
 
@@ -932,3 +1159,52 @@ class Database():
 
         with self.connect() as conn:
             conn.execute(query, values)
+
+    def get_setting(self, key: str) -> str:
+        """Retrieve a setting value by key"""
+        try:
+            query = "SELECT value FROM settings WHERE key = %s"
+            logging.info(f"query: {query}")
+            values = (key,)
+            logging.info(f"values: {values}")
+
+            with self.connect() as conn:
+                record = conn.execute(query, values).fetchone()
+
+            return record[0] if record else None
+        except Exception as e:
+            logging.error(f"Error retrieving setting '{key}': {e}")
+            raise
+
+    def set_setting(self, key: str, value: str) -> None:
+        """Set or update a setting value"""
+        try:
+            query = """
+                INSERT INTO settings (key, value, updated_at)
+                VALUES (%s, %s, NOW())
+                ON CONFLICT (key)
+                DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+            """
+            logging.info(f"query: {query}")
+            values = (key, value)
+            logging.info(f"values: {values}")
+
+            with self.connect() as conn:
+                conn.execute(query, values)
+        except Exception as e:
+            logging.error(f"Error setting '{key}' to '{value}': {e}")
+            raise
+
+    def get_talk_mode_enabled(self) -> bool:
+        """Get talk mode enabled status with default fallback to True"""
+        try:
+            value = self.get_setting('talk_mode_enabled')
+            if value is None:
+                # Setting doesn't exist, return default True
+                return True
+            # Convert string value to boolean
+            return value.lower() == 'true'
+        except Exception as e:
+            logging.error(f"Error retrieving talk mode setting: {e}")
+            # Return default True on any error for backward compatibility
+            return True

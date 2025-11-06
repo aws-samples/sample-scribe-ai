@@ -86,7 +86,7 @@ resource "null_resource" "postgres_setup" {
   provisioner "local-exec" {
     command = "./database.sh"
     environment = {
-      AWS_REGION  = data.aws_region.current.name
+      AWS_REGION  = local.region
       CLUSTER_ARN = local.aurora_cluster_arn
       DB_NAME     = local.database_name
       DB_USER     = local.bedrock_user

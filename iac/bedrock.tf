@@ -1,6 +1,10 @@
 locals {
   model_id_haiku_3_5  = "anthropic.claude-3-5-haiku-20241022-v1:0"
+  model_id_haiku_4_5  = "anthropic.claude-haiku-4-5-20251001-v1:0"
   model_id_sonnet_3_5 = "anthropic.claude-3-5-sonnet-20241022-v2:0"
+  model_id_sonnet_4_0 = "anthropic.claude-sonnet-4-20250514-v1:0"
+  model_id_sonnet_4_5 = "anthropic.claude-sonnet-4-5-20250929-v1:0"
+  model_id_nova_sonic = "amazon.nova-sonic-v1:0"
 
   inference_region1 = "us-east-1"
   inference_region2 = "us-east-2"
@@ -202,6 +206,40 @@ resource "awscc_bedrock_prompt" "chat_reword" {
       template_configuration = {
         text = {
           text = file("${path.module}/../shared/prompts/chat_reword.md")
+        }
+      }
+    }
+  ]
+}
+
+resource "awscc_bedrock_prompt" "interview_voice" {
+  name            = "${var.name}_interview_voice"
+  description     = "Prompt used for voice interviews"
+  default_variant = "variant"
+
+  variants = [
+    {
+      name          = "variant"
+      template_type = "TEXT"
+      model_id      = local.model_id_haiku_3_5
+      inference_configuration = {
+        text = {
+          temperature = 1
+        }
+      }
+      template_configuration = {
+        text = {
+          input_variables = [
+            {
+              name = "topic"
+              type = "string"
+            },
+            {
+              name = "areas"
+              type = "string"
+            }
+          ]
+          text = file("${path.module}/../shared/prompts/interview_voice.md")
         }
       }
     }

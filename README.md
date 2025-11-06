@@ -8,18 +8,22 @@ Scribe AI transforms natural conversations with experts into structured, AI-read
 
 ## Key Capabilities
 
-- Knowledge scope configuration
+- Knowledge capture interview workflow
+- AI-driven interviews
 - Natural language conversation capture
+- Experimental interview talk mode [*](#notes-on-experiemental-talk-mode)
 - Human in the loop review
-- Built in chatbot & API ready
+- Knowledge base with semantic search
+- Built in AI chatbot
 - Rich document generation
 
 ## Key Technical Capabilities
 
 - Deployable in under 15 minutes using IaC (instructions below)
-- LLM request/response payloads logged to S3 bucket in JSON format (for analysis and testing)
+- Cognito for authentication and authorization
 - Auto-scaling architecture (see docs below)
 - OpenTelemetry tracing support using AWS X-Ray
+- Nova Sonic integration for voice interviews
 
 ## Architecture
 
@@ -71,11 +75,13 @@ Before we get into deployment, let's review the project's directory structure.
 |____iac          # Terraform Infrastructure As Code (IAC)
 |____events       # Python code for running async events
 | |____shared     # Symbolic link to ../shared code
+|____voice        # TypeScript Lambda for voice interview processing
 ```
 
 - The `iac` directory contains the Terraform Infrastructure as Code (IaC) to deploy the full app stack
 - The `web` directory contains the Python code for the web application
 - The `events` directory contains the Python code for handling asynchronous events
+- The `voice` directory contains the TypeScript Lambda function for voice interview processing with Nova Sonic
 - The `shared` directory contains Python code that is shared between `web` and `events`. This code is symlinked into both the `web` and `events` directories to make it easier to reference. This means that when you change code in `./shared` it's immediately reflected in both `./web/shared` and `./events/shared`.
 
 ### 3. Deploy cloud infrastructure
@@ -143,7 +149,7 @@ make deploy app=${APP_NAME}
 
 #### Deploy Events Lambda Function
 
-The Lambda function that runs async events is automatically deployed during the `terraform apply` process as part of the Infrastructure as Code (IaC). The project architecture maintains a clear separation between infrastructure and application code. This design decision allows for different deployment frequencies: infrastructure changes less frequently, while application code can be updated more often.
+This Lambda function that runs async events is automatically deployed during the `terraform apply` process as part of the Infrastructure as Code (IaC). The project architecture maintains a clear separation between infrastructure and application code. This design decision allows for different deployment frequencies: infrastructure changes less frequently, while application code can be updated more often.
 
 This separation enables a streamlined CI process for application code updates (implementation of which is left to the reader), without requiring frequent infrastructure redeployments. The result is a more efficient and less risky development workflow that accommodates the different change cadences of infrastructure and application components.
 
@@ -151,7 +157,18 @@ This separation enables a streamlined CI process for application code updates (i
 
 ```sh
 cd events
-make deploy
+make deploy app=${APP_NAME}-events
+```
+
+#### Deploy Voice Processor Lambda Function
+
+This Lambda function brokers connectivity between Nova Sonic and AppSync Events. Similar to the events lambda above, it is automatically deployed during the `terraform apply` process as part of the Infrastructure as Code (IaC).
+
+*This step is only required if you make changes to the Lambda code. To deploy changes to the Lambda function code (which uses containers for packaging), you can run the following:
+
+```sh
+cd voice
+make deploy app=${APP_NAME}-voice
 ```
 
 ### 5. Navigate to the app endpoint
@@ -398,3 +415,13 @@ export ADMIN=$(terraform output -raw db_creds_secret_arn)
 export DB_NAME=postgres
 ./db-migrate.sh
 ```
+
+### Notes on Experiemental Talk Mode
+
+This is an experimental feature that enables human-like voice-driven interviews using cutting-edge AI speech-to-speech foundation models on Amazon Bedrock.  The current version has two main limitations:
+
+1. The Amazon Nova Sonic model we're currently using has an 8-minute hard time limit on a session.
+
+2. When users give long verbal responses with extensive pauses between thoughts, the model sometimes interrupts and moves on to new topics, which can disrupt the flow of the interview.
+
+We've conducted most of our testing using the Chrome browser which seems to work best. Your mileage may vary using other browsers.

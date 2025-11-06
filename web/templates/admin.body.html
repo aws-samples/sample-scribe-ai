@@ -52,4 +52,36 @@
   >
     New Scope
   </button>
+
+  <!-- System Settings Section -->
+  <div class="mt-5">
+    <h6>System Settings</h6>
+    <div class="form-check form-switch">
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="talkModeToggle"
+        {%
+        if
+        talk_mode_enabled
+        %}checked{%
+        endif
+        %}
+        hx-post="/admin/settings/talk-mode"
+        hx-target="#talk-mode-status"
+        hx-swap="innerHTML"
+        hx-indicator="#talk-mode-loading"
+      />
+      <label class="form-check-label" for="talkModeToggle">
+        Enable Talk Mode
+      </label>
+      <div id="talk-mode-loading" class="htmx-indicator ms-2">
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    </div>
+    <div id="talk-mode-status" class="form-text">
+    </div>
+  </div>
 </div>

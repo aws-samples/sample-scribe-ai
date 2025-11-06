@@ -1,0 +1,39 @@
+{
+	"name": "scribe-ai-web-voice",
+	"version": "1.0.0",
+	"description": "React.js voice interface component for Scribe AI",
+	"main": "static/js/voice-interface.js",
+	"scripts": {
+		"build": "webpack --mode production",
+		"build:dev": "webpack --mode development",
+		"build:watch": "webpack --mode development --watch",
+		"clean": "rm -rf ../static/js/voice-interface.js ../static/js/voice-interface.js.map"
+	},
+	"dependencies": {
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"aws-amplify": "^6.0.0",
+		"zod": "^3.23.0"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.23.0",
+		"@babel/preset-env": "^7.23.0",
+		"@babel/preset-react": "^7.22.0",
+		"@babel/preset-typescript": "^7.23.0",
+		"@types/react": "^18.2.0",
+		"@types/react-dom": "^18.2.0",
+		"babel-loader": "^9.1.0",
+		"typescript": "^5.2.0",
+		"webpack": "^5.89.0",
+		"webpack-cli": "^5.1.0"
+	},
+	"keywords": [
+		"react",
+		"voice",
+		"audio",
+		"appsync",
+		"web-audio-api"
+	],
+	"author": "",
+	"license": "ISC"
+}
