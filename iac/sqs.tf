@@ -5,7 +5,7 @@ resource "aws_sqs_queue" "main" {
   max_message_size           = 262144
   message_retention_seconds  = 86400 # 1 day
   receive_wait_time_seconds  = 10    # Enable long polling
-  visibility_timeout_seconds = 120   # Visibility timeout for processing
+  visibility_timeout_seconds = 180   # Visibility timeout for processing
 
   # Configure the DLQ redrive policy
   redrive_policy = jsonencode({
