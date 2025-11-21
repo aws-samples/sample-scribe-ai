@@ -15,7 +15,8 @@ locals {
 }
 
 module "aurora_postgres" {
-  source = "terraform-aws-modules/rds-aurora/aws"
+  source  = "terraform-aws-modules/rds-aurora/aws"
+  version = "9.16.1"
 
   name                        = var.name
   engine                      = data.aws_rds_engine_version.postgres.engine
