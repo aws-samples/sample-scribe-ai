@@ -37,7 +37,7 @@ resource "aws_lambda_function" "message_processor" {
   image_uri    = docker_registry_image.lambda_registry_image.name
 
   architectures = ["arm64"]
-  timeout       = 300
+  timeout       = 120
   memory_size   = 512
   role          = aws_iam_role.lambda_role.arn
 
