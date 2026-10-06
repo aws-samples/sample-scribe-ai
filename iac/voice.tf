@@ -14,7 +14,7 @@ locals {
 
 # ECR repository for voice Lambda function
 resource "aws_ecr_repository" "voice_lambda" {
-  name = local.voice_lambda_name
+  name                 = local.voice_lambda_name
   image_tag_mutability = "IMMUTABLE"
   force_delete         = true
 
@@ -73,9 +73,23 @@ resource "aws_appsync_channel_namespace" "voice_events" {
   code_handlers = <<EOF
 import { util } from '@aws-appsync/utils';
 
+// Channel format: /nova-sonic-voice/user/{userId}/{sessionId}
+// Cognito users may only access channels for their own userId (Cognito sub).
+// IAM callers (the voice Lambda) have no sub and are authorized via IAM policy.
+function authorizeChannel(ctx) {
+  const sub = ctx.identity && ctx.identity.sub;
+  if (sub && ctx.info.channel.segments[2] !== sub) {
+    util.unauthorized();
+  }
+}
+
 export function onSubscribe(ctx) {
-  // Allow all subscriptions for now - can add authorization later
-  console.log('Subscription request for channel:', ctx.info.channel.path);
+  authorizeChannel(ctx);
+}
+
+export function onPublish(ctx) {
+  authorizeChannel(ctx);
+  return ctx.events;
 }
 EOF
 
@@ -155,7 +169,7 @@ resource "docker_image" "voice_lambda_image" {
   name = "${aws_ecr_repository.voice_lambda.repository_url}:${local.image_tag}"
 
   build {
-    context = "${path.module}/../voice"
+    context  = "${path.module}/../voice"
     platform = "linux/arm64"
   }
 

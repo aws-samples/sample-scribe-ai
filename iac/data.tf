@@ -11,7 +11,7 @@ data "aws_availability_zones" "available" {}
 
 data "aws_rds_engine_version" "postgres" {
   engine  = "aurora-postgresql"
-  version = "15.12"
+  version = "15.15"
 }
 
 # Get ECR authorization token

@@ -9,6 +9,11 @@ locals {
 resource "aws_cognito_user_pool" "main" {
   name = "${var.name}-user-pool"
 
+  # Disable self-service sign-up; only admins can create users
+  admin_create_user_config {
+    allow_admin_create_user_only = true
+  }
+
   # Password policy
   password_policy {
     minimum_length    = 8
