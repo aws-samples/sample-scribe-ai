@@ -1,8 +1,8 @@
 # Voice Mode Infrastructure for Nova Sonic Integration
 
 locals {
-  # Nova Sonic model configuration
-  nova_sonic_model_id = "amazon.nova-sonic-v1:0"
+  # Nova Sonic model configuration (Nova Sonic v1 reached end of life 2026-09-14)
+  nova_sonic_model_id = "amazon.nova-2-sonic-v1:0"
 
   # Voice Lambda function configuration
   voice_lambda_name    = "${var.name}-voice"

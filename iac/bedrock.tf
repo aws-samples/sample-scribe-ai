@@ -4,7 +4,6 @@ locals {
   model_id_sonnet_3_5 = "anthropic.claude-3-5-sonnet-20241022-v2:0"
   model_id_sonnet_4_0 = "anthropic.claude-sonnet-4-20250514-v1:0"
   model_id_sonnet_4_5 = "anthropic.claude-sonnet-4-5-20250929-v1:0"
-  model_id_nova_sonic = "amazon.nova-sonic-v1:0"
 
   inference_region1 = "us-east-1"
   inference_region2 = "us-east-2"

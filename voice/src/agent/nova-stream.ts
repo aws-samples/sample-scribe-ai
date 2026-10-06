@@ -10,7 +10,7 @@ import { NodeHttp2Handler } from '@smithy/node-http-handler';
 import { ToolDefinition } from './tools/common';
 
 const MAX_AUDIO_INPUT_QUEUE_SIZE = 200;
-const modelId = 'amazon.nova-sonic-v1:0';
+const modelId = process.env.NOVA_SONIC_MODEL_ID || 'amazon.nova-2-sonic-v1:0';
 const bedrock = new BedrockRuntimeClient({
   region: process.env.BEDROCK_REGION || 'us-east-1',
   requestHandler: new NodeHttp2Handler({
@@ -255,6 +255,11 @@ export class NovaStream {
             maxTokens: 1024,
             topP: 0.9,
             temperature: 1,
+          },
+          // Nova 2 Sonic: LOW waits longest (~2s) before taking its turn,
+          // so interviewees can pause to think without being interrupted
+          turnDetectionConfiguration: {
+            endpointingSensitivity: 'LOW',
           },
         },
       },

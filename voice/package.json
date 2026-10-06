@@ -6,10 +6,7 @@
 	"scripts": {
 		"build": "tsc",
 		"build:watch": "tsc --watch",
-		"clean": "rm -rf dist/",
-		"test": "jest",
-		"test:watch": "jest --watch",
-		"test:coverage": "jest --coverage"
+		"clean": "rm -rf dist/"
 	},
 	"dependencies": {
 		"@aws-sdk/client-bedrock-runtime": "^3.987.0",
@@ -25,12 +22,9 @@
 	},
 	"devDependencies": {
 		"@types/aws-lambda": "^8.10.0",
-		"@types/jest": "^30.0.0",
 		"@types/node": "^18.0.0",
 		"@types/pg": "^8.10.0",
 		"@types/winston": "^2.4.4",
-		"jest": "^29.7.0",
-		"ts-jest": "^29.4.1",
 		"typescript": "^5.0.0"
 	},
 	"keywords": [
