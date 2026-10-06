@@ -226,7 +226,7 @@ module "ecs_service" {
     },
   }
 
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids         = module.vpc.private_subnets
   security_group_ids = [aws_security_group.ecs_service.id]
 
   tasks_iam_role_name        = "${var.name}-tasks"

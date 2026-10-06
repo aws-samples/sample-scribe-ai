@@ -49,8 +49,10 @@ def create_app():
         if text is None:
             return ""
 
-        # Use markdown2 with extras for better rendering
-        html = markdown2.markdown(text, extras=[
+        # Use markdown2 with extras for better rendering.
+        # safe_mode='escape' escapes raw HTML in user/LLM content to prevent
+        # stored XSS, since the result is marked safe via Markup() below.
+        html = markdown2.markdown(text, safe_mode='escape', extras=[
             "fenced-code-blocks",
             "tables",
             "break-on-newline",

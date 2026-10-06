@@ -24,6 +24,15 @@ def _complete_interview(interview, db):
     sqs.post_message(event_type, str(interview.id))
 
 
+def _authorize_interview(interview):
+    """Abort with 404/403 unless the interview exists and belongs to the current user"""
+    if not interview:
+        abort(404, "Interview not found")
+    if interview.user_id != get_current_user_id():
+        logging.warning(f"access denied to interview {interview.id}")
+        abort(403, "Access denied to this interview")
+
+
 def register_routes(app, db: Database):
     """Register interview-related routes with the Flask app"""
 
@@ -95,6 +104,7 @@ def register_routes(app, db: Database):
 
         # get interview
         interview = db.get_interview(id)
+        _authorize_interview(interview)
 
         # kick off interview by invoking llm with prompt
         logging.info("orchestrator.start_interview()")
@@ -119,6 +129,7 @@ def register_routes(app, db: Database):
 
         # get interview
         interview = db.get_interview(id)
+        _authorize_interview(interview)
 
         logging.info("rendering interviews.conversation.body.html")
         return render_template("interviews.conversation.body.html", interview=interview)
@@ -167,6 +178,7 @@ def register_routes(app, db: Database):
 
         interview = db.get_interview(id)
         logging.info("fetched interview")
+        _authorize_interview(interview)
 
         # at this point we have a interview question with ai question
         # update the latest question with the user's answer
@@ -206,6 +218,7 @@ def register_routes(app, db: Database):
         logging.info(f"interview id: {id}")
         interview = db.get_interview(id)
         logging.info("fetched interview")
+        _authorize_interview(interview)
 
         _complete_interview(interview, db)
 
